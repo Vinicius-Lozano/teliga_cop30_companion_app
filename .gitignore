@@ -18,3 +18,4 @@ venv/
 # SQLite
 *.sqlite3
 
+.env

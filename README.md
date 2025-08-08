@@ -30,7 +30,7 @@ Antes de começar, garanta que você tenha os seguintes softwares instalados na 
 Abra seu terminal, navegue até o diretório onde deseja salvar o projeto e clone o repositório.
 
 ```bash
-git clone <URL_DO_SEU_REPOSITORIO_GIT>
+git clone https://github.com/Vinicius-Lozano/te_liga
 cd projeto_te_liga
 ```
 
