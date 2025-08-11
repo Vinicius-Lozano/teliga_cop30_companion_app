@@ -1,0 +1,17 @@
+{
+  "name": "projeto-te-liga-monorepo",
+  "version": "1.0.0",
+  "description": "Script runner para o projeto Te Liga (Frontend + Backend)",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm run install:backend && npm run install:frontend",
+    "install:backend": "echo 'Instalando dependencias do Backend...' && python -m pip install -r backend/requirements.txt",
+    "install:frontend": "echo 'Instalando dependencias do Frontend...' && cd frontend && npm install",
+    "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "cd backend && python manage.py runserver",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

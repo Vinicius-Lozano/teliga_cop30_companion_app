@@ -1,0 +1,52 @@
+# ===================================================================
+#  Arquivo .gitignore centralizado para o projeto Te Liga
+# ===================================================================
+
+# Arquivos de Sistema Operacional e Logs
+# -------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Arquivos de Ambiente (NUNCA comitar senhas ou chaves de API)
+# -------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.env.local*
+
+# Dependências (sempre recriadas com 'pip install' e 'npm install')
+# -------------------------------------------------------------------
+node_modules/
+
+# Diretórios de Build e Distribuição
+# -------------------------------------------------------------------
+/dist/
+/build/
+
+# Configurações de Editores de Código
+# -------------------------------------------------------------------
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Específico do Backend (Python/Django)
+# -------------------------------------------------------------------
+/venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Específico do Frontend (Quasar/Vue)
+# -------------------------------------------------------------------
+/frontend/dist/
+/frontend/.quasar/
+/frontend/quasar.config.*.temporary.compiled*
+/frontend/src-cordova/
+/frontend/src-capacitor/
