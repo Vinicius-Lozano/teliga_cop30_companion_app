@@ -61,7 +61,7 @@ function irParaDetalhes(id) {
 }
 
 onMounted(async () => {
-  isMounted.value = true // Garante que o container do mapa já tem as dimensões corretas
+  isMounted.value = true 
   const res = await fetch('/eventos.json')
   eventos.value = await res.json()
 })

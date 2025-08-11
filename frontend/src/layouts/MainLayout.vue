@@ -3,6 +3,10 @@
     <q-header elevated class="navbar-custom">
       <q-toolbar>
         <q-toolbar-title>Te Liga!</q-toolbar-title>
+        <div>
+          <q-btn flat dense to="/" label="Mapa" icon="map" />
+          <q-btn flat dense to="/teste-back" label="Testar API" icon="link" />
+        </div>
       </q-toolbar>
     </q-header>
 
