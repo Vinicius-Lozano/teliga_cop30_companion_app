@@ -9,7 +9,9 @@
     "install:frontend": "echo 'Instalando dependencias do Frontend...' && cd frontend && npm install",
     "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
     "dev:backend": "cd backend && python manage.py runserver",
-    "dev:frontend": "cd frontend && npm run dev"
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:force": "concurrently \"npm:dev:backend\" \"npm:dev:frontend:force\"",
+    "dev:frontend:force": "cd frontend && quasar dev -- --force"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

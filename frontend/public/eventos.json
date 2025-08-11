@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "nome": "Evento Sustentável",
+    "descricao": "Palestra sobre preservação ambiental",
+    "latitude": -1.41391,
+    "longitude": -48.46033,
+    "icone": "/icons/leaf.png"
+  },
+  {
+    "id": 2,
+    "nome": "Corrida Verde",
+    "descricao": "Evento esportivo pela sustentabilidade",
+    "latitude": -1.4605,
+    "longitude": -48.4902,
+    "icone": "/icons/run.png"
+  },
+  {
+    "id": 3,
+    "nome": "Feira de Artesanato",
+    "descricao": "Produtos Locais e Sustentáveis",
+    "latitude": -1.45110,
+    "longitude": -48.49451,
+    "icone": "/icons/market.png"
+  }
+]
