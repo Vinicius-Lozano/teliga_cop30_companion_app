@@ -140,8 +140,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Lista de origens que têm permissão para fazer requisições cross-site.
 # Ideal para produção, listando apenas os domínios do seu frontend.
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "http://localhost:9000",
+    "http://127.0.0.1:9000",
 ]
 
 # Django REST Framework Configuration
