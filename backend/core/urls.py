@@ -5,7 +5,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.views.generic.base import RedirectView
 from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -17,6 +17,9 @@ def teste_rota(request):
     return JsonResponse({"status": "ok", "message": "Conexão com o backend bem-sucedida!"})
 
 urlpatterns = [
+    # APPS locais
+    path('', include('users.urls')),
+    
     # Redireciona a URL raiz ('/') para a página do Swagger UI
     path('', RedirectView.as_view(url='/api/swagger/', permanent=False)),
 
