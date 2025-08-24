@@ -18,7 +18,7 @@ def teste_rota(request):
 
 urlpatterns = [
     # APPS locais
-    path('', include('users.urls')),
+    path('api/', include('users.urls')),
     
     # Redireciona a URL raiz ('/') para a página do Swagger UI
     path('', RedirectView.as_view(url='/api/swagger/', permanent=False)),
