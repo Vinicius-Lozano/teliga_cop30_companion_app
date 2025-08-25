@@ -22,6 +22,9 @@
           <!-- Se não estiver autenticado -->
           <template v-else>
             <q-btn flat dense to="/login" label="Login" icon="login" />
+
+            <!-- botão de Cadastro -->
+            <q-btn flat dense to="/register" label="Cadastro" icon="person_add" />
           </template>
 
           <q-btn flat dense to="/teste-back" label="Testar API" icon="link" />
@@ -52,19 +55,18 @@ const router = useRouter()
 
 const userName = computed(() => {
   if (!authStore.user) return 'Usuário'
-  // Usa o primeiro nome se existir, senão o username
   return authStore.user.first_name || authStore.user.username
 })
 
 function handleLogout () {
   authStore.logout()
-  // Redireciona para a página de login
   router.push('/login')
 }
 </script>
 
 <style scoped>
 .navbar-custom {
-  background: #2e7d32; /* Este é o verde que usamos no banner da Home */
+  background: #2e7d32; /* Verde do banner da Home */
 }
 </style>
+
