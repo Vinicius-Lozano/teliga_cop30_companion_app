@@ -8,8 +8,8 @@
 
     <div class="column justify-center items-center" style="flex: 1;">
       <q-card class="q-pa-lg" style="width: 84%; max-width: 432px;">
-
-        <!-- titulo do card -->
+        
+        <!-- título do card -->
         <q-card-section class="text-center q-pb-sm">
           <div class="text-h4 text-green-10 font-weight-bold">Bem Vindo!</div>
           <div class="text-subtitle2 q-mt-xs">Efetue seu login</div>
@@ -30,7 +30,7 @@
           </div>
         </q-card-section>
 
-        <!-- Formulario -->
+        <!-- Formulário -->
         <q-card-section class="q-pt-sm" tag="form" @submit.prevent="login">
           <q-input v-model="username" label="Email ou usuário" outlined dense class="q-mb-sm" />
           <q-input v-model="password" label="Senha" type="password" outlined dense class="q-mb-sm" />
@@ -58,6 +58,9 @@ import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { authStore } from 'src/stores/auth'
+
+// importação do css
+import 'src/css/login.scss'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -95,11 +98,11 @@ async function login () {
     // Define o header de autorização para as próximas requisições
     axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`
 
-    // Busca os dados do usuário para exibir o nome
+    // Busca os dados do usuário
     const userResponse = await axios.get(`${import.meta.env.VITE_API_URL}/users/me/`)
     authStore.setUser(userResponse.data)
 
-    // Redireciona para a página principal ou dashboard
+    // Redireciona para a página principal
     router.push('/')
   } catch (error) {
     let errorMessage = 'Não foi possível fazer o login. Tente novamente.'
@@ -114,15 +117,3 @@ async function login () {
   }
 }
 </script>
-
-<style scoped>
-.text-green-10 {
-  color: #2e7d32;
-}
-.font-weight-bold {
-  font-weight: 700;
-}
-.text-black {
-  color: #000000;
-}
-</style>
