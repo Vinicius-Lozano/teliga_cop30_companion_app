@@ -1,6 +1,12 @@
 <template>
   <div>
-    <!-- Mapa -->
+    <!-- Banner -->
+    <header class="banner">
+      <h1>Te Liga!</h1>
+      <p>Bem-vindo(a) ao mapa de eventos!</p>
+    </header>
+
+    <!-- Mapa (somente após montagem do componente, para evitar erro no SSR) -->
     <q-no-ssr>
       <l-map
         v-if="isMounted"
@@ -33,6 +39,7 @@
 defineOptions({
   name: 'HomePage'
 })
+
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { LMap, LTileLayer, LMarker, LIcon } from '@vue-leaflet/vue-leaflet'
@@ -61,12 +68,11 @@ function irParaDetalhes(id) {
 }
 
 onMounted(async () => {
-  isMounted.value = true 
+  isMounted.value = true
   const res = await fetch('/eventos.json')
   eventos.value = await res.json()
 })
 </script>
-
 
 <style scoped>
 .banner {
