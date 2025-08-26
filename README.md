@@ -49,7 +49,7 @@ Seu terminal mostrará os logs de ambos os servidores. Agora, você pode acessar
 
 *   **Backend (Ferramentas do Django):**
     *   **Painel de Admin:** `http://localhost:8000/admin`
-    *   **Documentação da API (Swagger):** `http://localhost:8000/api/schema/swagger-ui/`
+    *   **Documentação da API (Swagger):** `http://localhost:8000/api/swagger/`
 
 Para parar os servidores, pressione `Ctrl + C` no terminal.
 
