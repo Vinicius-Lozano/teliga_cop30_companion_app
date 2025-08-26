@@ -9,12 +9,16 @@ from django.urls import path, include
 from django.http import JsonResponse
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from django.views.generic.base import RedirectView
 
 def teste_rota(request):
     """View simples que retorna um JSON para testar a conexão com backend."""
     return JsonResponse({"status": "ok", "message": "Conexão com o backend bem-sucedida!"})
 
 urlpatterns = [
+    
+    path('', RedirectView.as_view(url='/api/swagger/', permanent=False)),
+    
     path('admin/', admin.site.urls),
 
     # Rotas de Autenticação (Login, Logout, Registro, etc.)
@@ -32,5 +36,5 @@ urlpatterns = [
     path('api/', include('events.urls')),
 
     # teste rota
-    path('api/teste-rota_back/', teste_rota, name='teste-rota_back'),
+    path('api/teste_rota_back/', teste_rota, name='teste_rota_back'),
 ]

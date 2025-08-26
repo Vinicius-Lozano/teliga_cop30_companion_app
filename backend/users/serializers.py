@@ -15,7 +15,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 class CustomRegisterSerializer(RegisterSerializer):
     genero = serializers.ChoiceField(choices=Usuario.Genero.choices, required=False, allow_blank=True)
     data_nas = serializers.DateField(required=False, allow_null=True)
-    telefone = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    telefone = serializers.CharField(max_length=15,required=False, allow_null=True, allow_blank=True)
 
     def custom_signup(self, request, user):
         user.genero = self.validated_data.get('genero', '')

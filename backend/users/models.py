@@ -46,9 +46,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     genero = models.CharField(
         _("gênero"), max_length=1, choices=Genero.choices, blank=True
     )
-    data_nas = models.DateField(_("data de nascimento"), unique=True, null=True, blank=True)
+    data_nas = models.DateField(_("data de nascimento"), null=True, blank=True)
     telefone = models.CharField(
-        _("telefone"), max_length=15, unique=True, null=True, blank=True
+        _("telefone"), max_length=15, null=True, blank=True
     )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

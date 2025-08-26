@@ -185,14 +185,17 @@ REST_AUTH = {
     'USER_DETAILS_SERIALIZER': 'users.serializers.UsuarioSerializer',
 }
 
-# django-allauth Configuration (dependency of dj-rest-auth)
+# django-allauth Configuration 
 # --------------------------------------------------------------------------
 SITE_ID = 1
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Use 'optional' or 'mandatory' in production
-ACCOUNT_LOGIN_METHODS = {'username', 'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
-ACCOUNT_USER_MODEL_EMAIL_FIELD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Use 'optional' ou 'mandatory' em produção
+
+ACCOUNT_SIGNUP_FIELDS = {
+    'username': {'required': True},
+    'email': {'required': True},
+    'password1': {'required': True},
+    'password2': {'required': True},
+}
 
 # drf-spectacular Configuration
 # --------------------------------------------------------------------------
