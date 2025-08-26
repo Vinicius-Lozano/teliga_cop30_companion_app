@@ -6,9 +6,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic.base import RedirectView
 from django.http import JsonResponse
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
@@ -17,23 +15,19 @@ def teste_rota(request):
     return JsonResponse({"status": "ok", "message": "Conexão com o backend bem-sucedida!"})
 
 urlpatterns = [
-    # APPS locais
-    path('api/', include('users.urls')),
-    
-    # Redireciona a URL raiz ('/') para a página do Swagger UI
-    path('', RedirectView.as_view(url='/api/swagger/', permanent=False)),
-
     path('admin/', admin.site.urls),
 
-    # Rotas de Autenticação JWT
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Rotas de Autenticação (Login, Logout, Registro, etc.)
+    # O login (em /api/auth/login/) já retorna os tokens JWT.
+    path("api/auth/", include("dj_rest_auth.urls")),
+    path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
 
     # Rotas da Documentação (drf-spectacular)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    # Rota para teste de conexão
-    path('api/teste_rota_back/', teste_rota, name='teste_rota_back'),
+    # APPS locais
+    path('api/', include('users.urls')),
+    path('api/', include('events.urls')),
 ]

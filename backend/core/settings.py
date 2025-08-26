@@ -32,24 +32,28 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    #Nativos do django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Meus Apps
+
+    # bibliotecas
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'drf_spectacular',
+    'dj_rest_auth',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'dj_rest_auth.registration',
+
+    # Local
     'users',
     'events',
-    #DRF
-    'rest_framework',
-    #CORS
-    'corsheaders',
-    #Documentação
-    'drf_spectacular',
-    #JWT
-    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -144,14 +149,48 @@ CORS_ALLOWED_ORIGINS = [
 
 # Django REST Framework Configuration
 # --------------------------------------------------------------------------
+# This tells Django REST Framework that all API views should, by default,
+# use JWT for authentication.
 REST_FRAMEWORK = {
-    # Define o schema padrão para a documentação
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    # Define a autenticação padrão para JWT
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # This ensures that, by default, API endpoints are accessible for read
+    # operations (GET, HEAD, OPTIONS) without authentication, but require
+    # authentication for write operations (POST, PUT, PATCH, DELETE).
+    # This is a flexible default for many projects.
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+# dj-rest-auth Configuration
+# --------------------------------------------------------------------------
+REST_AUTH = {
+    # This is the key setting. It tells dj-rest-auth to use JWT for its
+    # login/logout/registration endpoints, which makes it stop looking for
+    # the default 'rest_framework.authtoken' model and resolves the error.
+    'USE_JWT': True,
+    # Explicitly tell dj-rest-auth not to use a token model from the database,
+    # which is the correct behavior for JWT.
+    'TOKEN_MODEL': None,
+    # This ensures the refresh token is sent in the response body, which is
+    # easier for JavaScript frontends to handle.
+    'JWT_AUTH_HTTPONLY': False,
+    # This tells dj-rest-auth to use your custom serializer to add extra
+    # claims (like username and email) to the JWT.
+    'JWT_TOKEN_CLAIMS_SERIALIZER': 'users.serializers.MyTokenObtainPairSerializer',
+    'REGISTER_SERIALIZER': 'users.serializers.CustomRegisterSerializer',
+    'USER_DETAILS_SERIALIZER': 'users.serializers.UsuarioSerializer',
+}
+
+# django-allauth Configuration (dependency of dj-rest-auth)
+# --------------------------------------------------------------------------
+SITE_ID = 1
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Use 'optional' or 'mandatory' in production
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Allows login with username or email
+ACCOUNT_EMAIL_REQUIRED = True
 
 # drf-spectacular Configuration
 # --------------------------------------------------------------------------

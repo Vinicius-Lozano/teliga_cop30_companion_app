@@ -83,14 +83,13 @@ async function login () {
     return
   }
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}/token/`, {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login/`, {
       username: username.value,
       password: password.value
     })
 
     const accessToken = response.data.access
     const refreshToken = response.data.refresh
-
     // Armazena os tokens no localStorage
     localStorage.setItem('accessToken', accessToken)
     localStorage.setItem('refreshToken', refreshToken)
@@ -99,7 +98,7 @@ async function login () {
     axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`
 
     // Busca os dados do usuário
-    const userResponse = await axios.get(`${import.meta.env.VITE_API_URL}/users/me/`)
+    const userResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/user/`)
     authStore.setUser(userResponse.data)
 
     // Redireciona para a página principal

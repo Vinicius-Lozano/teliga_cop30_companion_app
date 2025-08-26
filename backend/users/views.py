@@ -1,12 +1,12 @@
 from rest_framework import generics, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
-from .serializers import UserSerializer, MyTokenObtainPairSerializer
+from .serializers import UsuarioSerializer, MyTokenObtainPairSerializer
 from .models import Usuario
 
 class RegisterView(generics.CreateAPIView):
     queryset = Usuario.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UsuarioSerializer
     permission_classes = [permissions.AllowAny] 
 
 class LoginView(TokenObtainPairView):
@@ -14,14 +14,14 @@ class LoginView(TokenObtainPairView):
 
 class UserListView(generics.ListAPIView):
     queryset = Usuario.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UsuarioSerializer
     permission_classes = [permissions.IsAdminUser]
 
 class UserMeView(generics.RetrieveAPIView):
     """
     Retorna os dados do usuário autenticado (o próprio usuário).
     """
-    serializer_class = UserSerializer
+    serializer_class = UsuarioSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
