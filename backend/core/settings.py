@@ -189,8 +189,10 @@ REST_AUTH = {
 # --------------------------------------------------------------------------
 SITE_ID = 1
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Use 'optional' or 'mandatory' in production
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Allows login with username or email
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+ACCOUNT_USER_MODEL_EMAIL_FIELD = 'email'
 
 # drf-spectacular Configuration
 # --------------------------------------------------------------------------

@@ -30,4 +30,7 @@ urlpatterns = [
     # APPS locais
     path('api/', include('users.urls')),
     path('api/', include('events.urls')),
+
+    # teste rota
+    path('api/teste-rota_back/', teste_rota, name='teste-rota_back'),
 ]

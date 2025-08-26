@@ -41,7 +41,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     username = models.CharField(_("username"), max_length=50, unique=True)
     email = models.EmailField(
-        _("endereço de email"), max_length=254, unique=True, null=True, blank=True
+        _("endereço de email"), max_length=254, unique=True
     )
     genero = models.CharField(
         _("gênero"), max_length=1, choices=Genero.choices, blank=True
@@ -59,4 +59,4 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email']
