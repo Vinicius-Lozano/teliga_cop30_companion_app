@@ -1,26 +1,74 @@
 [
   {
     "id": 1,
-    "nome": "Evento Sustentável",
-    "descricao": "Palestra sobre preservação ambiental",
-    "latitude": -1.41391,
-    "longitude": -48.46033,
-    "icone": "/icons/leaf.png"
+    "titulo": "Ver-o-Peso",
+    "categoria": "Cultura / Turismo",
+    "imagem": "/images/veropa.png",
+    "descricao": "O Ver-o-Peso é um dos mercados a céu aberto mais famosos do Brasil e um dos maiores da América Latina. Localizado às margens da Baía do Guajará, em Belém, é um ponto turístico e cultural que reúne cores, aromas, sabores da Amazônia...",
+    "curiosidades": "Uma curiosidade bem interessante sobre o Ver-o-Peso é que ele existe desde 1625, quando funcionava como um ponto de cobrança de impostos sobre mercadorias que chegavam de barco a Belém.",
+    "imagensExtras": [
+      "/images/veropa2.jpeg",
+      "/images/veropa3.png",
+      "/images/veropa4.png"
+    ],
+    "endereco": "Boulevard Castilhos França - Campina",
+    "data": "23/08/2025",
+    "latitude": -1.45217,
+    "longitude": -48.50375,
+    "icone": "/icons/market.png"
   },
   {
     "id": 2,
-    "nome": "Corrida Verde",
-    "descricao": "Evento esportivo pela sustentabilidade",
-    "latitude": -1.4605,
-    "longitude": -48.4902,
-    "icone": "/icons/run.png"
+    "titulo": "Estação das Docas",
+    "categoria": "Cultura / Gastronomia",
+    "imagem": "/images/estacao1.jpg",
+    "descricao": "A Estação das Docas é um complexo turístico em Belém que reúne restaurantes, lojas, eventos culturais e uma vista incrível da orla...",
+    "curiosidades": "O espaço foi inaugurado em 2000 e revitalizou antigos armazéns portuários, tornando-se um dos pontos mais visitados da cidade.",
+    "imagensExtras": [
+      "/images/estacao2.jpeg",
+      "/images/estacao3.jpeg",
+      "/images/estacao4.jpeg"
+    ],
+    "endereco": "Av. Marechal Hermes - Campina",
+    "data": "20/08/2025",
+    "latitude": -1.44872,
+    "longitude": -48.50013,
+    "icone": "/icons/leaf.png"
   },
   {
     "id": 3,
-    "nome": "Feira de Artesanato",
-    "descricao": "Produtos Locais e Sustentáveis",
-    "latitude": -1.45110,
-    "longitude": -48.49451,
-    "icone": "/icons/market.png"
+    "titulo": "Hangar Centro de Convenções da Amazônia",
+    "categoria": "Eventos / Cultura / Negócios",
+    "imagem": "/images/hangar1.png",
+    "descricao": "O Hangar Centro de Convenções da Amazônia é um dos maiores espaços para eventos da região Norte, localizado em Belém. Projetado para receber congressos, feiras, exposições, shows e convenções, conta com ampla infraestrutura moderna, auditórios, áreas de exposição e serviços de apoio.",
+    "curiosidades": "Inaugurado em 2007, o Hangar já sediou eventos nacionais e internacionais de grande porte, tornando-se referência em turismo de negócios na Amazônia.",
+    "imagensExtras": [
+    "/images/hangar2.png",
+    "/images/hangar3.jpg",
+    "/images/hangar4.jpeg"
+    ],
+    "endereco": "Av. Dr. Freitas, Marco - Belém, PA",
+    "data": "25/08/2025",
+    "latitude": -1.42151,
+    "longitude": -48.45675,
+    "icone": "/icons/leaf.png"
+  },
+  {
+    "id": 4,
+    "titulo": "Bosque Rodrigues Alves - Jardim Zoobotânico da Amazônia",
+    "categoria": "Natureza / Cultura / Lazer",
+    "imagem": "/images/bosque1.jpg",
+    "descricao": "O Bosque Rodrigues Alves é um dos espaços verdes mais tradicionais de Belém. Conhecido como 'pulmão da cidade', abriga mais de 2.500 espécies de flora amazônica, além de animais típicos da região, lagos, trilhas e espaços de convivência.",
+    "curiosidades": "Fundado em 1883, o Bosque foi inspirado no Jardim Botânico do Rio de Janeiro. É um refúgio ecológico em plena área urbana e recebe milhares de visitantes por ano.",
+    "imagensExtras": [
+    "/images/bosque2.jpg",
+    "/images/bosque3.jpg",
+    "/images/bosque4.jpg"
+    ],
+    "endereco": "Av. Almirante Barroso, Marco - Belém, PA",
+    "data": "25/08/2025",
+    "latitude": -1.43000,
+    "longitude": -48.45697,
+    "icone": "/icons/sloth.png"
   }
 ]
