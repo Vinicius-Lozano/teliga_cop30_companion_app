@@ -6,7 +6,7 @@
       <p>Bem-vindo(a) ao mapa de eventos!</p>
     </header>
 
-    <!-- Mapa (somente após montagem do componente, para evitar erro no SSR) -->
+    <!-- Mapa (somente após montagem do componente) -->
     <q-no-ssr>
       <l-map
         v-if="isMounted"
@@ -46,8 +46,7 @@ import { LMap, LTileLayer, LMarker, LIcon } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Corrige o problema com os ícones padrão do Leaflet em ambientes com bundlers (Vite/Webpack)
-// https://vue-leaflet.com/troubleshooting/#marker-icons-are-not-showing
+// Corrige os ícones padrão do Leaflet
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
@@ -69,8 +68,12 @@ function irParaDetalhes(id) {
 
 onMounted(async () => {
   isMounted.value = true
-  const res = await fetch('/eventos.json')
-  eventos.value = await res.json()
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/eventos/`)
+    eventos.value = await response.json()
+  } catch (err) {
+    console.error('Erro ao carregar eventos:', err)
+  }
 })
 </script>
 
