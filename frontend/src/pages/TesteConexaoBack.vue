@@ -33,7 +33,7 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    const apiUrl = `${import.meta.env.VITE_API_URL}/teste_rota_back/`
+    const apiUrl = `${import.meta.env.VITE_API_URL}/api/teste_rota_back/`
     const response = await fetch(apiUrl)
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)

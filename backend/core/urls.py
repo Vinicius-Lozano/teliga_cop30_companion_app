@@ -25,7 +25,6 @@ urlpatterns = [
     # O login (em /api/auth/login/) já retorna os tokens JWT.
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
-    path("api/", include("events.urls")), #rotas criadas pelo Fernando para o app eventos + crud realizado
 
     # Rotas da Documentação (drf-spectacular)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
@@ -35,6 +34,7 @@ urlpatterns = [
     # APPS locais
     path('api/', include('users.urls')),
     path('api/', include('events.urls')),
+    path('api/', include('item.urls')),
 
     # teste rota
     path('api/teste_rota_back/', teste_rota, name='teste_rota_back'),
