@@ -21,8 +21,8 @@ Siga estes passos para ter o projeto rodando. Todos os comandos devem ser execut
 Primeiro, crie uma cópia do projeto na sua máquina:
 
 ```bash
-git clone https://github.com/Vinicius-Lozano/projeto_te_liga.git
-cd projeto_te_liga
+git clone https://github.com/Vinicius-Lozano/teliga_cop30_companion_app
+cd teliga_cop30_companion_app
 ```
 
 ### 2. Instale Todas as Dependências
