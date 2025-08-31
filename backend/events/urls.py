@@ -1,7 +1,7 @@
-from rest_framework.routers import DefaultRouter
-from .views import EventoViewSet
+from django.urls import path
+from .views import EventoListView, EventoDetailView
 
-router = DefaultRouter()
-router.register(r'eventos', EventoViewSet, basename='evento')
-
-urlpatterns = router.urls
+urlpatterns = [
+    path('eventos/', EventoListView.as_view(), name='evento-list'),
+    path('eventos/<int:id>/', EventoDetailView.as_view(), name='evento-detail'),
+]

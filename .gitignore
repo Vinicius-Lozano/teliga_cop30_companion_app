@@ -38,7 +38,8 @@ node_modules/
 
 # Específico do Backend (Python/Django)
 # -------------------------------------------------------------------
-/venv/
+venv/
+.venv/
 __pycache__/
 *.py[cod]
 *.sqlite3
