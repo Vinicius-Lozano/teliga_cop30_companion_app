@@ -121,37 +121,53 @@ const eventosValidos = computed(() => eventos.value.filter(e => e.latitude != nu
 const itensProximosValidos = computed(() => itensProximos.value.filter(i => i.latitude != null && i.longitude != null))
 
 // Obter posição do usuário e centralizar o mapa
-function obterPosicaoUsuario() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        usuarioPos.value = [position.coords.latitude, position.coords.longitude]
-        mapCenter.value = usuarioPos.value
-        if (mapRef.value?.mapObject) {
-          mapRef.value.mapObject.setView(usuarioPos.value, 13)
-        }
-      },
-      (err) => console.error('Erro ao obter localização:', err)
-    )
-  } else {
-    alert('Seu navegador não suporta geolocalização!')
+async function obterPosicaoUsuario() {
+  if (!navigator.geolocation) { 
+    alert('Seu navegador não suporta geolocalização!'); 
+    return 
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      usuarioPos.value = [position.coords.latitude, position.coords.longitude]
+      mapCenter.value = usuarioPos.value
+      if (mapRef.value?.mapObject) mapRef.value.mapObject.setView(usuarioPos.value, 13)
+
+      await carregarItensProximos()
+    },
+    (err) => console.error('Erro ao obter localização:', err)
+  )
+}
+
+async function carregarItensProximos() {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}api/itens_proximos/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        latitude: usuarioPos.value[0],
+        longitude: usuarioPos.value[1],
+        qtd_itens: 10
+      })
+    })
+    itensProximos.value = await response.json()
+  } catch (err) {
+    console.error('Erro ao carregar itens próximos:', err)
   }
 }
 
+
 onMounted(async () => {
   isMounted.value = true
-  obterPosicaoUsuario()
-
+  obterPosicaoUsuario() 
   try {
-    const eventosResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/eventos/`)
+    const eventosResponse = await fetch(`${import.meta.env.VITE_API_URL}api/eventos/`)
     eventos.value = await eventosResponse.json()
-
-    const itensResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/itens/`)
-    itensProximos.value = await itensResponse.json()
   } catch (err) {
-    console.error('Erro ao carregar eventos ou itens:', err)
+    console.error('Erro ao carregar eventos:', err)
   }
 })
+
 </script>
 
 <style scoped>

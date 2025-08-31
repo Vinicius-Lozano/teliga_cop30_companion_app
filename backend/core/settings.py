@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'users',
     'events',
     'item',
+    'mapaItens',
 ]
 
 MIDDLEWARE = [
