@@ -6,8 +6,16 @@
         <div>
           <q-btn flat dense to="/" label="Mapa" icon="map" />
 
-          <!-- Se o usuário estiver autenticado -->
           <template v-if="authStore.isAuthenticated">
+            <q-btn
+              v-if="authStore.isAdmin"
+              flat
+              dense
+              label="Admin"
+              icon="admin_panel_settings"
+              to="/admin/eventos"
+            />
+
             <q-btn flat dense :label="`Olá, ${userName}`" icon="account_circle">
               <q-menu>
                 <q-list style="min-width: 100px">
@@ -19,11 +27,8 @@
             </q-btn>
           </template>
 
-          <!-- Se não estiver autenticado -->
           <template v-else>
             <q-btn flat dense to="/login" label="Login" icon="login" />
-
-            <!-- botão de Cadastro -->
             <q-btn flat dense to="/register" label="Cadastro" icon="person_add" />
           </template>
 
@@ -45,13 +50,16 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { authStore } from 'src/stores/auth'
+// 1. Corrigir a importação da store
+import { useAuthStore } from 'src/stores/auth'
 
 defineOptions({
   name: 'MainLayout'
 })
 
 const router = useRouter()
+// 2. Instanciar a store (ESSENCIAL!)
+const authStore = useAuthStore()
 
 const userName = computed(() => {
   if (!authStore.user) return 'Usuário'
@@ -69,4 +77,3 @@ function handleLogout () {
   background: #2e7d32; /* Verde do banner da Home */
 }
 </style>
-

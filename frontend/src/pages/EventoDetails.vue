@@ -67,7 +67,13 @@ const evento = ref(null)
 
 onMounted(async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/eventos/${route.params.id}/`)
+    // CORREÇÃO: A URL foi alterada para corresponder à rota do backend (/api/events/fixed/<id>/)
+    const response = await fetch(`/api/events/fixed/${route.params.id}/`)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
     evento.value = await response.json()
 
     if (evento.value) {

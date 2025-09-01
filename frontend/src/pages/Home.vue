@@ -69,7 +69,13 @@ function irParaDetalhes(id) {
 onMounted(async () => {
   isMounted.value = true
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/eventos/`)
+    // CORREÇÃO: A URL foi alterada para corresponder à rota do backend (/api/events/fixed/)
+    // e para usar o proxy do devServer, removendo a variável de ambiente.
+    const response = await fetch('/api/events/fixed/')
+    if (!response.ok) {
+      // Lança um erro se a resposta não for bem-sucedida (ex: 404, 500)
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     eventos.value = await response.json()
   } catch (err) {
     console.error('Erro ao carregar eventos:', err)
