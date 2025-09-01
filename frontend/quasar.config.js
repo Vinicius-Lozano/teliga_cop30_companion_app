@@ -13,6 +13,7 @@ export default defineConfig((/* ctx */) => {
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     boot: [
       'axios',
+      'pinia' // <-- Juntei os dois aqui
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
@@ -63,7 +64,7 @@ export default defineConfig((/* ctx */) => {
           'vite-plugin-checker',
           {
             eslint: {
-              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{js,mjs,cjs,vue}"',
+              lintCommand: 'eslint -c ./eslint.config.js "./src/**/*.{js,mjs,cjs,vue}"',
               useFlatConfig: true,
             },
           },
@@ -76,6 +77,16 @@ export default defineConfig((/* ctx */) => {
     devServer: {
       // https: true,
       open: true, // opens browser window automatically
+
+      // Adicione a configuração de proxy aqui
+      proxy: {
+        // Qualquer requisição que comece com '/api'
+        // será redirecionada para o seu backend Django
+        '/api': {
+          target: 'http://127.0.0.1:8000', // Endereço do seu backend
+          changeOrigin: true,
+        }
+      }
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
@@ -94,7 +105,8 @@ export default defineConfig((/* ctx */) => {
 
       // Quasar plugins
       plugins: [
-        'Notify'
+        'Notify',
+        'Dialog'
       ],
     },
 
