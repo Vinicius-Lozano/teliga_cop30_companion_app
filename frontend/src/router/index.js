@@ -6,7 +6,8 @@ import {
   createWebHashHistory,
 } from 'vue-router'
 import routes from './routes'
-import { useAuthStore } from 'src/stores/auth' 
+// 1. REMOVER A IMPORTAÇÃO DO PINIA
+// import { useAuthStore } from 'src/stores/auth' 
 
 export default defineRouter(function () {
   const createHistory = process.env.SERVER
@@ -21,20 +22,29 @@ export default defineRouter(function () {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   })
 
-  // ✅ Proteção de rotas
+  // ✅ Proteção de rotas ATUALIZADA para usar localStorage
   Router.beforeEach((to, from, next) => {
-    const store = useAuthStore()
+    // 2. BUSCAR DADOS DIRETAMENTE DO LOCALSTORAGE
+    const token = localStorage.getItem('user_token')
+    const userDataString = localStorage.getItem('user_data')
+    const user = userDataString ? JSON.parse(userDataString) : null
+    
+    const isAuthenticated = !!token
 
-    // Verifica se a rota exige autenticação
-    if (to.meta.requiresAuth && !store.isAuthenticated) {
+    // 3. VERIFICAR SE A ROTA EXIGE AUTENTICAÇÃO
+    if (to.meta.requiresAuth && !isAuthenticated) {
+      // Se a rota é protegida e não há token, redireciona para o login
       return next('/login')
     }
 
-    // Verifica se a rota exige admin
-    if (to.meta.requiresAdmin && (!store.user || !store.user.is_staff)) {
-      return next('/') // manda pra Home se não for admin
+    // 4. VERIFICAR SE A ROTA EXIGE PERMISSÃO DE ADMIN
+    // (o campo is_staff vem dos dados do usuário salvos no localStorage)
+    if (to.meta.requiresAdmin && (!user || !user.is_staff)) {
+      // Se a rota exige admin e o usuário não é staff, redireciona para a home
+      return next('/') 
     }
 
+    // Se passou por todas as verificações, permite o acesso
     next()
   })
 

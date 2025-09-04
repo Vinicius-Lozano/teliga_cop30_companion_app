@@ -26,7 +26,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # Rotas de Autenticação (Login, Logout, Registro, etc.)
-    # O login (em /api/auth/login/) já retorna os tokens JWT.
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
 
@@ -37,7 +36,8 @@ urlpatterns = [
 
     # APPS locais
     path('api/', include('users.urls')),
-    path('api/', include('events.urls')),
+    # CORRIGIDO: Define um prefixo claro e padronizado para as rotas de eventos
+    path('api/events/', include('events.urls')),
     path('api/', include('item.urls')),
     path('api/', include('mapaItens.urls')),
 

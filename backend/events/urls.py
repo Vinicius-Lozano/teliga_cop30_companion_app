@@ -1,18 +1,17 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-# Assumindo que sua view para eventos fixos se chama FixedEventViewSet
 from .views import EventoViewSet
 
+# Cria um roteador padrão
 router = DefaultRouter()
 
-# CORRIGIDO: Registrando a rota 'fixed' para corresponder ao que o frontend espera.
-# Isso irá criar a URL /api/events/fixed/
-router.register(r'fixed', EventoViewSet, basename='fixed-event')
+# CORREÇÃO: Registra a ViewSet na raiz ('') do app de eventos.
+# Isso fará com que as rotas sejam:
+# /api/events/ (para a lista de eventos - GET, POST)
+# /api/events/{id}/ (para um evento específico - GET, PUT, PATCH, DELETE)
+router.register(r'', EventoViewSet, basename='evento')
 
-# Se no futuro você tiver eventos aleatórios com outra ViewSet,
-# você pode adicionar outra linha aqui.
-# Ex: router.register(r'random', RandomEventViewSet, basename='random-event')
-
+# Inclui as URLs geradas pelo roteador
 urlpatterns = [
     path('', include(router.urls)),
 ]

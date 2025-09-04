@@ -55,7 +55,7 @@
               <div class="col"><q-input v-model="form.data" label="Data" type="date" stack-label filled /></div>
               <div class="col"><q-input v-model="form.horario" label="Horário" type="time" stack-label filled /></div>
             </div>
-            <q-input v-model="form.icone" label="URL do Ícone do Mapa" filled />
+            <q-input v-model="form.icone" label="Caminho do Ícone (ex: /icons/leaf.png)" filled />
             <q-file v-model="form.imagem" label="Imagem Principal do Evento" filled accept="image/*">
               <template v-slot:prepend><q-icon name="cloud_upload" /></template>
             </q-file>
@@ -82,7 +82,6 @@ const loading = ref(false)
 const showForm = ref(false)
 const isSaving = ref(false)
 
-// Estado inicial do formulário correspondendo ao models.py
 const formInitialState = {
   id: null,
   titulo: '',
@@ -100,7 +99,6 @@ const formInitialState = {
 }
 const form = ref({ ...formInitialState })
 
-// Colunas da tabela atualizadas para o seu modelo
 const columns = [
   { name: 'id', label: 'ID', field: 'id', align: 'left', sortable: true },
   { name: 'titulo', label: 'Título', field: 'titulo', align: 'left', sortable: true },
@@ -111,16 +109,18 @@ const columns = [
   { name: 'actions', label: 'Ações', align: 'center' }
 ]
 
-const backendUrl = 'http://127.0.0.1:8000'
+// CORREÇÃO: A URL do backend não é mais necessária aqui, pois o proxy cuida disso.
 function getImageUrl(imagePath) {
   if (!imagePath) return ''
-  return imagePath.startsWith('http') ? imagePath : `${backendUrl}${imagePath}`
+  // As imagens virão do backend, que está na mesma origem por causa do proxy.
+  return imagePath
 }
 
 async function fetchEventos() {
   loading.value = true
   try {
-    const response = await api.get('/api/events/fixed/')
+    // CORREÇÃO: URL padronizada para /api/events/
+    const response = await api.get('/api/events/')
     eventos.value = response.data
   } catch (error) {
     console.error('Erro ao carregar eventos:', error)
@@ -143,13 +143,11 @@ async function saveEvento() {
   isSaving.value = true
   const formData = new FormData()
 
-  // Mapeia todos os campos do formulário para o FormData
   Object.keys(form.value).forEach(key => {
     const value = form.value[key]
     if (key === 'imagem' && value instanceof File) {
       formData.append(key, value)
-    } else if (key !== 'imagem' && value !== null) { // CORREÇÃO: Permite o envio de strings vazias para validação no backend
-      // JSON.stringify para o campo de imagens extras
+    } else if (key !== 'imagem' && value !== null && value !== undefined) {
       if (key === 'imagens_extras') {
         formData.append(key, JSON.stringify(value))
       } else {
@@ -160,10 +158,12 @@ async function saveEvento() {
 
   try {
     if (form.value.id) {
-      await api.patch(`/api/events/fixed/${form.value.id}/`, formData)
+      // CORREÇÃO: URL padronizada e método PATCH para atualizações
+      await api.patch(`/api/events/${form.value.id}/`, formData)
       $q.notify({ type: 'positive', message: 'Evento atualizado!' })
     } else {
-      await api.post('/api/events/fixed/', formData)
+      // CORREÇÃO: URL padronizada
+      await api.post('/api/events/', formData)
       $q.notify({ type: 'positive', message: 'Evento criado!' })
     }
     showForm.value = false
@@ -184,7 +184,8 @@ function deleteEvento(id) {
     cancel: { label: 'Cancelar', flat: true },
   }).onOk(async () => {
     try {
-      await api.delete(`/api/events/fixed/${id}/`)
+      // CORREÇÃO: URL padronizada
+      await api.delete(`/api/events/${id}/`)
       $q.notify({ type: 'positive', message: 'Evento removido!' })
       fetchEventos()
     } catch (error) {
@@ -196,4 +197,3 @@ function deleteEvento(id) {
 
 onMounted(fetchEventos)
 </script>
-

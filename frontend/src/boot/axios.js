@@ -1,50 +1,58 @@
 import { boot } from 'quasar/wrappers'
 import axios from 'axios'
-import { useAuthStore } from 'src/stores/auth' // 1. Importar o auth store
+import { Notify } from 'quasar' // Importar o Quasar Notify
 
-// A URL base da sua API Django
-// Removido, pois o proxy do devServer cuida disso.
-// Para produção, você configurará isso de outra forma (ex: variáveis de ambiente).
-const baseURL = ''
+const api = axios.create()
 
-// Criamos uma instância do axios que será usada em toda a aplicação
-const api = axios.create({ baseURL })
-
-// 2. Criar um interceptor de requisições
+// --- INTERCEPTOR DE REQUISIÇÃO (Já estava correto) ---
+// Adiciona o token em cada requisição
 api.interceptors.request.use(config => {
-  // --- DEBUGGING ---
-  console.log('[Axios Interceptor] Interceptando requisição para:', config.url)
-
-  // É preciso instanciar a store DENTRO do interceptor
-  const authStore = useAuthStore()
-  const token = authStore.token
-
-  // --- DEBUGGING ---
-  console.log('[Axios Interceptor] Token encontrado no authStore:', token)
-
-  // Se o token existir, adiciona o cabeçalho de autorização
+  const token = localStorage.getItem('user_token')
   if (token) {
-    // --- DEBUGGING ---
-    console.log('[Axios Interceptor] Token encontrado. Adicionando cabeçalho de autorização.')
-    // O formato 'Bearer' é o padrão para JWT com dj-rest-auth
     config.headers.Authorization = `Bearer ${token}`
-  } else {
-    // --- DEBUGGING ---
-    console.warn('[Axios Interceptor] Nenhum token encontrado. A requisição não será autorizada.')
   }
-
   return config
 }, error => {
-  // Faz algo com o erro da requisição
   return Promise.reject(error)
 })
 
+// --- NOVO: INTERCEPTOR DE RESPOSTA ---
+// Lida com erros globais, como tokens expirados
+api.interceptors.response.use(
+  // Se a resposta for bem-sucedida, apenas a retorne
+  (response) => response,
+  // Se ocorrer um erro...
+  (error) => {
+    // Verifica se o erro é de 'token inválido'
+    if (error.response && error.response.status === 401 && error.response.data?.code === 'token_not_valid') {
+      
+      // 1. Limpa os dados inválidos do localStorage
+      localStorage.removeItem('user_token')
+      localStorage.removeItem('user_data')
+
+      // 2. Mostra uma notificação amigável para o usuário
+      Notify.create({
+        message: 'Sua sessão expirou. Por favor, faça o login novamente.',
+        color: 'warning',
+        icon: 'warning',
+        position: 'top'
+      })
+      
+      // 3. Redireciona para a página de login
+      // Usamos 'window.location.href' para forçar um recarregamento completo da página
+      // e garantir que o estado da aplicação seja limpo.
+      window.location.href = '/#/login'
+    }
+
+    // Para todos os outros erros, apenas os rejeite para que o componente local possa tratá-los
+    return Promise.reject(error)
+  }
+)
+
+
 export default boot(({ app }) => {
-  // Para uso dentro de arquivos Vue (Options API) através de this.$api
   app.config.globalProperties.$api = api
 })
 
-// Exportamos a instância `api` para que possamos importá-la
-// diretamente em qualquer arquivo JS/Vue.
 export { api }
 

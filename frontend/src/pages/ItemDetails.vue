@@ -1,8 +1,8 @@
 <template>
-  <q-page class="container">
+  <q-page class="container q-pa-md">
     <!-- Botão de voltar -->
     <div class="row justify-end q-mb-md">
-      <q-btn label="Voltar para o mapa" flat icon="arrow_back" @click="$router.push('/')" />
+      <q-btn label="Voltar para o mapa" flat icon="arrow_back" to="/" />
     </div>
 
     <!-- Detalhes do item -->
@@ -24,17 +24,14 @@
         </div>
       </div>
 
-      <!-- Curiosidades e imagens extras (opcional) -->
-      <div v-if="item.curiosidades || item.imagensExtras?.length" class="card q-pa-lg q-mb-xl">
+      <!-- Curiosidades -->
+      <div v-if="item.curiosidades" class="card q-pa-lg q-mb-xl">
         <div class="section-title">
           <q-icon name="emoji_objects" color="amber-8" />
           Curiosidades
         </div>
-        <div v-if="item.curiosidades" class="text-body1 q-mb-lg" style="color:#374151; line-height:1.7">
+        <div class="text-body1 q-mb-lg" style="color:#374151; line-height:1.7">
           {{ item.curiosidades }}
-        </div>
-        <div v-if="item.imagensExtras?.length" class="thumb-strip">
-          <img v-for="(img, i) in item.imagensExtras" :key="i" :src="img" class="thumb" />
         </div>
       </div>
 
@@ -45,18 +42,17 @@
           Localização no mapa
         </div>
         <div id="map" class="map q-mb-md" style="height: 300px;"></div>
-        <div class="text-body1" style="color:#374151">
-          📍 <b>{{ item.endereco || 'Coordenadas não disponíveis' }}</b><br />
-          📅 Coletado em <i>{{ item.data || 'Não informado' }}</i>
-        </div>
       </div>
     </div>
 
     <!-- Caso item não encontrado -->
     <div v-else class="text-center q-mt-xl">
-      <q-icon name="error_outline" color="red" size="64px" />
-      <div class="text-h6 q-mt-md">Item não encontrado</div>
-      <q-btn color="primary" label="Voltar para o mapa" class="q-mt-lg" @click="$router.push('/')" />
+      <q-spinner color="primary" size="3em" v-if="isLoading" />
+      <div v-else>
+        <q-icon name="error_outline" color="red" size="64px" />
+        <div class="text-h6 q-mt-md">Item não encontrado</div>
+        <q-btn color="primary" label="Voltar para o mapa" class="q-mt-lg" to="/" />
+      </div>
     </div>
   </q-page>
 </template>
@@ -66,9 +62,12 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+// CORREÇÃO: Importar a instância 'api' padronizada
+import { api } from 'boot/axios'
 
 const route = useRoute()
 const item = ref(null)
+const isLoading = ref(true)
 
 // Função para escolher o ícone de acordo com o tipo
 function getIconUrl(tipo) {
@@ -81,9 +80,9 @@ function getIconUrl(tipo) {
 
 onMounted(async () => {
   try {
-    // Busca os dados do item
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/item/${route.params.id}/`)
-    item.value = await response.json()
+    // CORREÇÃO: Usar a instância 'api' e a URL correta, sem duplicar o '/api'
+    const response = await api.get(`/api/item/${route.params.id}/`)
+    item.value = response.data
 
     // Inicializa o mapa apenas se houver coordenadas válidas
     if (item.value?.latitude != null && item.value?.longitude != null) {
@@ -106,11 +105,14 @@ onMounted(async () => {
     }
   } catch (err) {
     console.error('Erro ao carregar item:', err)
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
 
 <style scoped>
+/* Estilos mantidos como estavam */
 .map {
   width: 100%;
 }
@@ -126,3 +128,4 @@ onMounted(async () => {
   border-radius: 8px;
 }
 </style>
+

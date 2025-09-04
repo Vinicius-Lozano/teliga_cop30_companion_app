@@ -22,6 +22,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+// CORREÇÃO: Importar a instância 'api' do axios
+import { api } from 'boot/axios'
 
 defineOptions({
   name: 'TestConnectionPage'
@@ -33,13 +35,9 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    const apiUrl = `${import.meta.env.VITE_API_URL}/api/teste_rota_back/`
-    const response = await fetch(apiUrl)
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
-    }
-    const data = await response.json()
-    message.value = data.message
+    // CORREÇÃO: Usar a instância 'api' e a URL relativa
+    const response = await api.get('/api/teste_rota_back/')
+    message.value = response.data.message
   } catch (e) {
     error.value = e.message
     console.error('Erro ao testar conexão:', e)

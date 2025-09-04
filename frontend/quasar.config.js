@@ -12,8 +12,7 @@ export default defineConfig((/* ctx */) => {
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     boot: [
-      'axios',
-      'pinia' // <-- Juntei os dois aqui
+      'axios'
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
