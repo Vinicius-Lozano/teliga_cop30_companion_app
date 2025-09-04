@@ -9,8 +9,10 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+from decouple import config
 from pathlib import Path
+from supabase import create_client
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -54,6 +56,8 @@ INSTALLED_APPS = [
     # Local
     'users',
     'events',
+    'item',
+    'mapaItens',
 ]
 
 MIDDLEWARE = [
@@ -162,7 +166,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_SCHEMA_CLASS': 'core.schema.AppNameAutoSchema',
 }
 
 # dj-rest-auth Configuration
@@ -188,14 +192,19 @@ REST_AUTH = {
 # django-allauth Configuration 
 # --------------------------------------------------------------------------
 SITE_ID = 1
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Use 'optional' ou 'mandatory' em produção
+ACCOUNT_EMAIL_VERIFICATION = 'none'   # dev; em prod usar 'optional' ou 'mandatory'
+
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}   
+
 
 ACCOUNT_SIGNUP_FIELDS = {
     'username': {'required': True},
-    'email': {'required': True},
-    'password1': {'required': True},
-    'password2': {'required': True},
+    'email':    {'required': True},
+    'password1':{'required': True},
+    'password2':{'required': True},
 }
+
+ACCOUNT_UNIQUE_EMAIL = True
 
 # drf-spectacular Configuration
 # --------------------------------------------------------------------------
@@ -214,31 +223,11 @@ SPECTACULAR_SETTINGS = {
         }
     },
     'SECURITY': [{'BearerAuth': []}],
-    
-}
-# --------------------------------------------------------------------------
-# Configurações Adicionais (JWT e Mídia)
-# --------------------------------------------------------------------------
-
-# Configurações do Simple JWT para aumentar a validade do token
-from datetime import timedelta
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
-    "ALGORITHM": "HS256",
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
 }
 
-# Configuração para servir arquivos de mídia (Imagens, etc.)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Supabase
+# --------------------------------------------------------------------------
+SUPABASE_URL = config("SUPABASE_URL")
+SUPABASE_KEY = config("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)

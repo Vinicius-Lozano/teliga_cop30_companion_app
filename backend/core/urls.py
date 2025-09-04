@@ -36,8 +36,10 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     # APPS locais
-    path('api/users/', include('users.urls')),
-    path('api/events/', include('events.urls')),
+    path('api/', include('users.urls')),
+    path('api/', include('events.urls')),
+    path('api/', include('item.urls')),
+    path('api/', include('mapaItens.urls')),
 
     # teste rota
     path('api/teste_rota_back/', teste_rota, name='teste_rota_back'),
