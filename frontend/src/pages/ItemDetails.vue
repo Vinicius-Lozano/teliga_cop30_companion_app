@@ -83,10 +83,9 @@ onMounted(async () => {
     // CORREÇÃO: Usar a instância 'api' e a URL correta, sem duplicar o '/api'
     const response = await api.get(`/api/item/${route.params.id}/`)
     item.value = response.data
-
+    await nextTick()
     // Inicializa o mapa apenas se houver coordenadas válidas
     if (item.value?.latitude != null && item.value?.longitude != null) {
-      await nextTick()
 
       const map = L.map('map').setView([item.value.latitude, item.value.longitude], 15)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
