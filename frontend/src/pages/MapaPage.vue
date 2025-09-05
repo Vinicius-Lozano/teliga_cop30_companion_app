@@ -147,7 +147,7 @@ async function carregarItensProximos() {
       body: JSON.stringify({
         latitude: usuarioPos.value[0],
         longitude: usuarioPos.value[1],
-        qtd_itens: 10
+        qtd_itens: 15
       })
     })
     itensProximos.value = await response.json()
