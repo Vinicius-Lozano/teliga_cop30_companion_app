@@ -8,8 +8,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         # List only the fields that are safe to expose in an API
-        fields = ('id', 'username', 'email', 'genero', 'data_nas', 'telefone', 'date_joined')
-        read_only_fields = ('username', 'email', 'date_joined')
+        fields = (
+            'id', 'username', 'email', 'genero', 'data_nas',
+            'telefone', 'date_joined', 'is_staff', 'is_superuser'
+        )
+        read_only_fields = ('username', 'email', 'date_joined', 'is_staff', 'is_superuser')
 
 # Custom serializer for user registration, required by your settings.py
 class CustomRegisterSerializer(RegisterSerializer):
@@ -34,4 +37,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['username'] = user.username
         token['email'] = user.email
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
         return token
+

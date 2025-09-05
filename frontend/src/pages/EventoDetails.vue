@@ -1,14 +1,16 @@
 <template>
-  <q-page class="container">
+  <q-page class="container q-pa-md">
+    <!-- Botão de voltar -->
     <div class="row justify-end q-mb-md">
-      <q-btn label="Voltar para o mapa" flat icon="arrow_back" @click="$router.push('/')" />
+      <q-btn label="Voltar para o mapa" flat icon="arrow_back" to="/" />
     </div>
 
+    <!-- Detalhes do evento -->
     <div v-if="evento">
       <div class="card q-pa-md q-mb-xl">
         <div class="row q-col-gutter-lg">
           <div class="col-12 col-md-6">
-            <q-img :src="evento.imagem" style="width:100%; height:300px" class="rounded-borders" />
+            <q-img :src="getImageUrl(evento.imagem)" style="width:100%; height:300px" class="rounded-borders" />
           </div>
           <div class="col-12 col-md-6">
             <h1 class="q-mt-none q-mb-sm" style="color:#166534; font-size:36px; font-weight:900; line-height:1.1">
@@ -22,7 +24,8 @@
         </div>
       </div>
 
-      <div class="card q-pa-lg q-mb-xl">
+      <!-- Curiosidades -->
+      <div v-if="evento.curiosidades" class="card q-pa-lg q-mb-xl">
         <div class="section-title">
           <q-icon name="emoji_objects" color="amber-8" />
           Curiosidades
@@ -30,28 +33,26 @@
         <div class="text-body1 q-mb-lg" style="color:#374151; line-height:1.7">
           {{ evento.curiosidades }}
         </div>
-        <div class="thumb-strip">
-          <img v-for="(img, i) in evento.imagensExtras" :key="i" :src="img" class="thumb" />
-        </div>
       </div>
 
+      <!-- Localização no mapa -->
       <div class="card q-pa-lg q-mb-xl">
         <div class="section-title">
           <q-icon name="public" color="green-8" />
           Localização no mapa
         </div>
-        <div id="map" class="map q-mb-md"></div>
-        <div class="text-body1" style="color:#374151">
-          📍 <b>{{ evento.endereco }}</b><br />
-          📅 Coletado em <i>{{ evento.data }}</i>
-        </div>
+        <div id="map" class="map q-mb-md" style="height: 300px;"></div>
       </div>
     </div>
 
+    <!-- Caso evento não encontrado -->
     <div v-else class="text-center q-mt-xl">
-      <q-icon name="error_outline" color="red" size="64px" />
-      <div class="text-h6 q-mt-md">Evento não encontrado</div>
-      <q-btn color="primary" label="Voltar para o mapa" class="q-mt-lg" @click="$router.push('/')" />
+      <q-spinner color="primary" size="3em" v-if="isLoading" />
+      <div v-else>
+        <q-icon name="error_outline" color="red" size="64px" />
+        <div class="text-h6 q-mt-md">Evento não encontrado</div>
+        <q-btn color="primary" label="Voltar para o mapa" class="q-mt-lg" to="/" />
+      </div>
     </div>
   </q-page>
 </template>
@@ -61,16 +62,29 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+// CORREÇÃO: Importar a instância 'api' padronizada
+import { api } from 'boot/axios'
 
 const route = useRoute()
 const evento = ref(null)
+const isLoading = ref(true)
+
+// Função para construir a URL completa da imagem, se necessário
+const backendUrl = 'http://127.0.0.1:8000'
+function getImageUrl(imagePath) {
+  if (!imagePath) return ''
+  // Se o caminho já for uma URL completa (ex: do Supabase), use-a. Senão, construa com a base do backend.
+  return imagePath.startsWith('http') ? imagePath : `${backendUrl}${imagePath}`
+}
 
 onMounted(async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/eventos/${route.params.id}/`)
-    evento.value = await response.json()
+    // CORREÇÃO: A chamada de API agora busca da rota correta de EVENTOS.
+    const response = await api.get(`/api/events/${route.params.id}/`)
+    evento.value = response.data
 
-    if (evento.value) {
+    // Inicializa o mapa apenas se houver coordenadas válidas
+    if (evento.value?.latitude != null && evento.value?.longitude != null) {
       await nextTick()
 
       const map = L.map('map').setView([evento.value.latitude, evento.value.longitude], 15)
@@ -78,18 +92,45 @@ onMounted(async () => {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map)
 
-      const icon = L.icon({
-        iconUrl: evento.value.icone || 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        iconSize: [30, 30],
-        iconAnchor: [15, 30]
-      })
-
-      L.marker([evento.value.latitude, evento.value.longitude], { icon })
+      // Usa o ícone padrão do Leaflet para eventos fixos
+      L.marker([evento.value.latitude, evento.value.longitude])
         .addTo(map)
-        .bindPopup(`<b>${evento.value.titulo}</b><br>${evento.value.endereco}`)
+        .bindPopup(`<b>${evento.value.titulo}</b>`)
     }
   } catch (err) {
     console.error('Erro ao carregar evento:', err)
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
+
+<style scoped>
+/* Estilos mantidos como estavam */
+.map {
+  width: 100%;
+}
+.subtitle-chip {
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+</style>
+
