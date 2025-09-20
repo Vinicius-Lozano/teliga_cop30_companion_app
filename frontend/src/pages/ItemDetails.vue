@@ -20,6 +20,15 @@
             <div class="text-body1 q-mt-md" style="color:#374151; line-height:1.7">
               {{ item.descricao }}
             </div>
+
+            <!-- Botão para guardar na mochila -->
+            <q-btn 
+              color="green-8" 
+              icon="backpack" 
+              label="Guardar na Mochila" 
+              class="q-mt-lg"
+              @click="guardarNaMochila" 
+            />
           </div>
         </div>
       </div>
@@ -60,14 +69,15 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import { useQuasar } from 'quasar'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-// CORREÇÃO: Importar a instância 'api' padronizada
 import { api } from 'boot/axios'
 
 const route = useRoute()
 const item = ref(null)
 const isLoading = ref(true)
+const $q = useQuasar()
 
 // Função para escolher o ícone de acordo com o tipo
 function getIconUrl(tipo) {
@@ -78,9 +88,23 @@ function getIconUrl(tipo) {
   }
 }
 
+// Função para guardar o item na mochila
+function guardarNaMochila() {
+  let mochila = JSON.parse(localStorage.getItem('mochila')) || []
+  
+  // Evitar duplicados
+ if (!mochila.find(i => i.id === item.value.id && i.tipoConteudo === 'item')) {
+  mochila.push({ ...item.value, tipoConteudo: 'item' })
+  localStorage.setItem('mochila', JSON.stringify(mochila))
+  $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
+} else {
+  $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
+}
+
+}
+
 onMounted(async () => {
   try {
-    // CORREÇÃO: Usar a instância 'api' e a URL correta, sem duplicar o '/api'
     const response = await api.get(`/api/item/${route.params.id}/`)
     item.value = response.data
 
@@ -112,7 +136,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Estilos mantidos como estavam */
 .map {
   width: 100%;
 }
@@ -128,4 +151,3 @@ onMounted(async () => {
   border-radius: 8px;
 }
 </style>
-

@@ -40,6 +40,7 @@ urlpatterns = [
     path('api/events/', include('events.urls')),
     path('api/', include('item.urls')),
     path('api/', include('mapaItens.urls')),
+    path('api/', include('captura.urls')),
 
     # teste rota
     path('api/teste_rota_back/', teste_rota, name='teste_rota_back'),

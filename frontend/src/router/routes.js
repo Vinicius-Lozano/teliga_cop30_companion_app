@@ -10,6 +10,7 @@ const routes = [
       
       // CORREÇÃO: Adicionada a rota para a página de detalhes dos itens (fauna)
       { path: 'item/:id', component: () => import('pages/ItemDetails.vue'), props: true },
+      { path: 'mochila', component: () => import('src/pages/MochilaPage.vue')},
 
       { path: 'teste-back', component: () => import('pages/TesteConexaoBack.vue') },
       {

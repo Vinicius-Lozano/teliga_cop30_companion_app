@@ -8,6 +8,8 @@
 
           <!-- SEÇÃO PARA USUÁRIOS LOGADOS -->
           <template v-if="isAuthenticated">
+            <q-btn flat dense to="/mochila" label="Mochila" icon="inventory" />
+            
             <!-- Botão Admin (só aparece se o usuário for staff) -->
             <q-btn
               v-if="isAdmin"
