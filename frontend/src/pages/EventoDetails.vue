@@ -20,6 +20,15 @@
             <div class="text-body1 q-mt-md" style="color:#374151; line-height:1.7">
               {{ evento.descricao }}
             </div>
+
+            <!-- Botão para guardar na mochila -->
+            <q-btn 
+              color="green-8" 
+              icon="backpack" 
+              label="Guardar na Mochila" 
+              class="q-mt-lg"
+              @click="guardarNaMochila" 
+            />
           </div>
         </div>
       </div>
@@ -60,26 +69,38 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import { useQuasar } from 'quasar'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-// CORREÇÃO: Importar a instância 'api' padronizada
 import { api } from 'boot/axios'
 
 const route = useRoute()
 const evento = ref(null)
 const isLoading = ref(true)
+const $q = useQuasar()
 
-// Função para construir a URL completa da imagem, se necessário
+// Backend base para imagens
 const backendUrl = 'http://127.0.0.1:8000'
 function getImageUrl(imagePath) {
   if (!imagePath) return ''
-  // Se o caminho já for uma URL completa (ex: do Supabase), use-a. Senão, construa com a base do backend.
   return imagePath.startsWith('http') ? imagePath : `${backendUrl}${imagePath}`
+}
+
+// Função para guardar evento na mochila
+function guardarNaMochila() {
+  let mochila = JSON.parse(localStorage.getItem('mochila')) || []
+
+  if (!mochila.find(e => e.id === evento.value.id && e.tipoConteudo === 'evento')) {
+    mochila.push({ ...evento.value, tipoConteudo: 'evento' })
+    localStorage.setItem('mochila', JSON.stringify(mochila))
+    $q.notify({ type: 'positive', message: `${evento.value.titulo} foi guardado na mochila!` })
+  } else {
+    $q.notify({ type: 'info', message: `${evento.value.titulo} já está na mochila!` })
+  }
 }
 
 onMounted(async () => {
   try {
-    // CORREÇÃO: A chamada de API agora busca da rota correta de EVENTOS.
     const response = await api.get(`/api/events/${route.params.id}/`)
     evento.value = response.data
 
@@ -92,7 +113,6 @@ onMounted(async () => {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map)
 
-      // Usa o ícone padrão do Leaflet para eventos fixos
       L.marker([evento.value.latitude, evento.value.longitude])
         .addTo(map)
         .bindPopup(`<b>${evento.value.titulo}</b>`)
@@ -106,31 +126,29 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Estilos mantidos como estavam */
 .map {
   width: 100%;
 }
 .subtitle-chip {
-    background-color: #e0e0e0;
-    color: #333;
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 0.85rem;
-    display: inline-block;
+  background-color: #e0e0e0;
+  color: #333;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  display: inline-block;
 }
 .card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 .section-title {
-    font-size: 1.25rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    color: #333;
+  font-size: 1.25rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #333;
 }
 </style>
-
