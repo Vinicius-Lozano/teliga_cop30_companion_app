@@ -1,12 +1,20 @@
-from rest_framework import generics
+from rest_framework import viewsets, permissions
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import Evento
 from .serializers import EventoSerializer
 
-class EventoListView(generics.ListAPIView):
-    queryset = Evento.objects.all()
-    serializer_class = EventoSerializer
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """
+    Permite leitura para qualquer um, mas escrita apenas para admin.
+    """
+    def has_permission(self, request, view):
+        # GET, HEAD, OPTIONS liberado para todos
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        # POST, PUT, DELETE só para admins
+        return request.user and request.user.is_staff
 
-class EventoDetailView(generics.RetrieveAPIView):
+class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
-    lookup_field = "id"
+    permission_classes = [IsAdminOrReadOnly]

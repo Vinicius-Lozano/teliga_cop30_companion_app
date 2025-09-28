@@ -8,6 +8,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
 
+# Imports necessários para servir arquivos de mídia em desenvolvimento
+from django.conf import settings
+from django.conf.urls.static import static
+
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from django.views.generic.base import RedirectView
 
@@ -16,13 +20,12 @@ def teste_rota(request):
     return JsonResponse({"status": "ok", "message": "Conexão com o backend bem-sucedida!"})
 
 urlpatterns = [
-    
+
     path('', RedirectView.as_view(url='/api/swagger/', permanent=False)),
-    
+
     path('admin/', admin.site.urls),
 
     # Rotas de Autenticação (Login, Logout, Registro, etc.)
-    # O login (em /api/auth/login/) já retorna os tokens JWT.
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
 
@@ -33,10 +36,16 @@ urlpatterns = [
 
     # APPS locais
     path('api/', include('users.urls')),
-    path('api/', include('events.urls')),
+    # CORRIGIDO: Define um prefixo claro e padronizado para as rotas de eventos
+    path('api/events/', include('events.urls')),
     path('api/', include('item.urls')),
     path('api/', include('mapaItens.urls')),
+    path('api/', include('captura.urls')),
 
     # teste rota
     path('api/teste_rota_back/', teste_rota, name='teste_rota_back'),
 ]
+
+# Adiciona a rota para servir arquivos de mídia quando DEBUG=True
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
