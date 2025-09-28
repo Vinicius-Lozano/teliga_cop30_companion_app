@@ -1,11 +1,9 @@
 <template>
   <q-page class="container q-pa-md">
-    <!-- Botão de voltar -->
     <div class="row justify-end q-mb-md">
       <q-btn label="Voltar para o mapa" flat icon="arrow_back" to="/" />
     </div>
 
-    <!-- Detalhes do item -->
     <div v-if="item">
       <div class="card q-pa-md q-mb-xl">
         <div class="row q-col-gutter-lg">
@@ -21,7 +19,6 @@
               {{ item.descricao }}
             </div>
 
-            <!-- Botão para guardar na mochila -->
             <q-btn 
               color="green-8" 
               icon="backpack" 
@@ -33,7 +30,6 @@
         </div>
       </div>
 
-      <!-- Curiosidades -->
       <div v-if="item.curiosidades" class="card q-pa-lg q-mb-xl">
         <div class="section-title">
           <q-icon name="emoji_objects" color="amber-8" />
@@ -44,7 +40,6 @@
         </div>
       </div>
 
-      <!-- Localização no mapa -->
       <div class="card q-pa-lg q-mb-xl">
         <div class="section-title">
           <q-icon name="public" color="green-8" />
@@ -54,7 +49,6 @@
       </div>
     </div>
 
-    <!-- Caso item não encontrado -->
     <div v-else class="text-center q-mt-xl">
       <q-spinner color="primary" size="3em" v-if="isLoading" />
       <div v-else>
@@ -102,20 +96,17 @@ function guardarNaMochila() {
 
 onMounted(async () => {
   try {
-    // 1. Busca os detalhes do item (descrição, nome, etc.)
+    // 1. Busca os detalhes do item 
     const response = await api.get(`/api/item/${route.params.id}/`)
     item.value = response.data
+    
+    await nextTick()
+    
+    // 2. Inicializa o mapa se o item tiver coordenadas válidas vindas da API
+    if (item.value?.latitude != null && item.value?.longitude != null) {
 
-    // 2. Pega as coordenadas da URL
-    const lat = route.query.lat;
-    const lon = route.query.lon;
-
-    // 3. Inicializa o mapa APENAS se houver coordenadas na URL
-    if (lat != null && lon != null) {
-      await nextTick()
-
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lon);
+      const latitude = parseFloat(item.value.latitude);
+      const longitude = parseFloat(item.value.longitude);
 
       const map = L.map('map').setView([latitude, longitude], 16) 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

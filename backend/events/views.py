@@ -17,8 +17,10 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     Permite leitura para qualquer um, mas escrita apenas para admin (staff).
     """
     def has_permission(self, request, view):
+        # Permite métodos seguros (GET, HEAD, OPTIONS) para qualquer usuário.
         if request.method in permissions.SAFE_METHODS:
             return True
+        # Permite métodos de escrita (POST, PUT, DELETE) apenas se o usuário for staff.
         return request.user and request.user.is_staff
 
 class EventoViewSet(viewsets.ModelViewSet):
@@ -29,6 +31,7 @@ class EventoViewSet(viewsets.ModelViewSet):
     serializer_class = EventoSerializer
     permission_classes = [IsAdminOrReadOnly]
 
+# NOVA VIEW PARA UPLOAD DE IMAGEM
 class SupabaseUploadView(APIView):
     """
     Endpoint para fazer upload de uma imagem para o Supabase Storage.
@@ -46,7 +49,7 @@ class SupabaseUploadView(APIView):
             )
 
         try:
-            # Inicializa o cliente Supabase usando a chave de SERVIÇO 
+            # Inicializa o cliente Supabase usando a chave de SERVIÇO (secreta)
             supabase_url = config("SUPABASE_URL")
             supabase_key = config("SUPABASE_SERVICE_KEY") 
             supabase: Client = create_client(supabase_url, supabase_key)
@@ -63,8 +66,10 @@ class SupabaseUploadView(APIView):
                 file_options={"content-type": image_file.content_type}
             )
 
-            # Obtém a URL pública do arquivo 
+            # Obtém a URL pública do arquivo que acabamos de enviar
             public_url = supabase.storage.from_(bucket_name).get_public_url(file_name)
+
+            # Retorna a URL para o frontend em caso de sucesso
             return Response({"imageUrl": public_url}, status=status.HTTP_200_OK)
 
         except Exception as e:

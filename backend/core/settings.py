@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from decouple import config
 from pathlib import Path
 from supabase import create_client
+from datetime import timedelta
 
 
 
@@ -232,3 +233,11 @@ SUPABASE_URL = config("SUPABASE_URL")
 SUPABASE_KEY = config("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=6),   
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),   
+    "ROTATE_REFRESH_TOKENS": True,                 
+    "BLACKLIST_AFTER_ROTATION": True,             
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
