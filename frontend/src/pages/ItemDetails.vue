@@ -88,31 +88,36 @@ function getIconUrl(tipo) {
   }
 }
 
-// Função para guardar o item na mochila
+// Função para guardar o item na mochila 
 function guardarNaMochila() {
   let mochila = JSON.parse(localStorage.getItem('mochila')) || []
-  
-  // Evitar duplicados
- if (!mochila.find(i => i.id === item.value.id && i.tipoConteudo === 'item')) {
-  mochila.push({ ...item.value, tipoConteudo: 'item' })
-  localStorage.setItem('mochila', JSON.stringify(mochila))
-  $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
-} else {
-  $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
-}
-
+  if (!mochila.find(i => i.id === item.value.id && i.tipoConteudo === 'item')) {
+    mochila.push({ ...item.value, tipoConteudo: 'item' })
+    localStorage.setItem('mochila', JSON.stringify(mochila))
+    $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
+  } else {
+    $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
+  }
 }
 
 onMounted(async () => {
   try {
+    // 1. Busca os detalhes do item (descrição, nome, etc.)
     const response = await api.get(`/api/item/${route.params.id}/`)
     item.value = response.data
 
-    // Inicializa o mapa apenas se houver coordenadas válidas
-    if (item.value?.latitude != null && item.value?.longitude != null) {
+    // 2. Pega as coordenadas da URL
+    const lat = route.query.lat;
+    const lon = route.query.lon;
+
+    // 3. Inicializa o mapa APENAS se houver coordenadas na URL
+    if (lat != null && lon != null) {
       await nextTick()
 
-      const map = L.map('map').setView([item.value.latitude, item.value.longitude], 15)
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lon);
+
+      const map = L.map('map').setView([latitude, longitude], 16) 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map)
@@ -123,9 +128,10 @@ onMounted(async () => {
         iconAnchor: [20, 40]
       })
 
-      L.marker([item.value.latitude, item.value.longitude], { icon })
+      L.marker([latitude, longitude], { icon })
         .addTo(map)
         .bindPopup(`<b>${item.value.nome}</b>`)
+        .openPopup(); 
     }
   } catch (err) {
     console.error('Erro ao carregar item:', err)

@@ -1,7 +1,6 @@
 <template>
   <q-page class="q-pa-md">
 
-    <!-- Cabeçalho -->
     <div class="row items-center q-mb-lg">
       <q-btn flat round dense icon="arrow_back" @click="$router.back()" />
       <div class="text-h5 q-ml-md">🎒 Minha Mochila</div>
@@ -11,7 +10,6 @@
       Aqui ficam os itens e eventos que você capturou.
     </div>
 
-    <!-- Itens -->
     <div class="q-mb-xl">
       <div class="row items-center q-mb-sm">
         <q-icon name="inventory_2" size="sm" class="q-mr-sm text-primary" />
@@ -34,12 +32,14 @@
           <q-card-section>
             <div class="text-subtitle1 text-primary">{{ item.nome }}</div>
             <div class="text-caption text-grey-7">{{ item.descricao }}</div>
+            <div v-if="item.tipo === 'POC'" class="text-positive text-weight-bold q-mt-sm">
+              Bônus de Captura: +{{ item.bonus_captura }}%
+            </div>
           </q-card-section>
         </q-card>
       </div>
     </div>
 
-    <!-- Eventos -->
     <div class="q-mb-xl">
       <div class="row items-center q-mb-sm">
         <q-icon name="event" size="sm" class="q-mr-sm text-secondary" />
@@ -57,12 +57,12 @@
           :key="evento.id"
           flat
           bordered
-          class="q-pa-md hover-card relative-position"
+          class="q-pa-md hover-card relative-position cursor-pointer"
+          @click="verDetalhesEvento(evento)"
         >
           <q-card-section>
             <div class="row items-center justify-between">
               <div class="text-subtitle1 text-secondary">{{ evento.titulo }}</div>
-              <!-- Botão de remover -->
               <q-btn
                 dense
                 flat
@@ -70,7 +70,7 @@
                 icon="delete"
                 color="negative"
                 size="sm"
-                @click="confirmarRemocao(evento)"
+                @click.stop="confirmarRemocao(evento)"
               />
             </div>
             <div class="text-caption text-grey-7">
@@ -81,7 +81,6 @@
       </div>
     </div>
 
-    <!-- Dialog de confirmação -->
     <q-dialog v-model="dialogAberto" persistent>
       <q-card>
         <q-card-section class="row items-center">
@@ -100,12 +99,15 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
   </q-page>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from "vue"
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const mochila = ref([])
 const dialogAberto = ref(false)
 const eventoSelecionado = ref(null)
@@ -122,13 +124,15 @@ const eventos = computed(() =>
   mochila.value.filter((m) => m.tipoConteudo === "evento")
 )
 
-// Abrir diálogo de confirmação
+function verDetalhesEvento(evento) {
+  router.push(`/details/${evento.id}`)
+}
+
 function confirmarRemocao(evento) {
   eventoSelecionado.value = evento
   dialogAberto.value = true
 }
 
-// Confirmar e remover o evento
 function removerEventoConfirmado() {
   if (eventoSelecionado.value) {
     mochila.value = mochila.value.filter(
@@ -148,5 +152,8 @@ function removerEventoConfirmado() {
 .hover-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>
