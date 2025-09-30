@@ -1,24 +1,24 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
+from django.contrib.auth import password_validation
 from .models import Usuario
 
-# Serializer for displaying and updating user data (e.g., on a profile page)
+# Serializer para exibir e atualizar dados do usuário (perfil)
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        # List only the fields that are safe to expose in an API
         fields = (
             'id', 'username', 'email', 'genero', 'data_nas',
             'telefone', 'date_joined', 'is_staff', 'is_superuser'
         )
         read_only_fields = ('username', 'email', 'date_joined', 'is_staff', 'is_superuser')
 
-# Custom serializer for user registration, required by your settings.py
+# Serializer de registro
 class CustomRegisterSerializer(RegisterSerializer):
     genero = serializers.ChoiceField(choices=Usuario.Genero.choices, required=False, allow_blank=True)
     data_nas = serializers.DateField(required=False, allow_null=True)
-    telefone = serializers.CharField(max_length=15,required=False, allow_null=True, allow_blank=True)
+    telefone = serializers.CharField(max_length=15, required=False, allow_null=True, allow_blank=True)
 
     def custom_signup(self, request, user):
         user.genero = self.validated_data.get('genero', '')
@@ -31,6 +31,7 @@ class CustomRegisterSerializer(RegisterSerializer):
             raise serializers.ValidationError("Este email já está em uso.")
         return email
 
+# JWT personalizado
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -40,4 +41,21 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_staff'] = user.is_staff
         token['is_superuser'] = user.is_superuser
         return token
+
+# serializer pra troca de senha
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Senha atual incorreta.")
+        return value
+
+    def validate_new_password(self, value):
+        password_validation.validate_password(value)
+        return value
+
+
 
