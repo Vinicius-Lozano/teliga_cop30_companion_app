@@ -30,9 +30,9 @@ class ItensProximosView(APIView):
 
         # 2) Quantidade de itens 
         try:
-            qtd_itens = int(request.data.get("qtd_itens", 10))
+            qtd_itens = int(request.data.get("qtd_itens", 20))
         except (TypeError, ValueError):
-            qtd_itens = 10
+            qtd_itens = 20
 
         # 3) Buscar itens do banco 
         itens = list(Item.objects.all())
