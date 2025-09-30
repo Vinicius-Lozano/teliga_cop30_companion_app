@@ -9,7 +9,6 @@ class ItensProximosView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # 1) Pegar latitude/longitude do request, ou gerar aleatórias se não vierem
         lat_raw = request.data.get("latitude")
         lon_raw = request.data.get("longitude")
 
@@ -29,13 +28,13 @@ class ItensProximosView(APIView):
         except (TypeError, ValueError):
             usuario_lon = random.uniform(-180.0, 180.0)
 
-        # 2) Quantidade de itens (default 10)
+        # 2) Quantidade de itens 
         try:
             qtd_itens = int(request.data.get("qtd_itens", 10))
         except (TypeError, ValueError):
             qtd_itens = 10
 
-        # 3) Buscar itens do banco
+        # 3) Buscar itens do banco 
         itens = list(Item.objects.all())
         if not itens:
             return Response([], status=200)
@@ -49,8 +48,7 @@ class ItensProximosView(APIView):
 
         pesos = [it._peso_float for it in itens]
 
-        # 5) Gerar resposta — aqui usamos coordenadas do item se existem,
-        #    caso contrário geramos coord próxima (sem sobrescrever banco).
+        # 5) Gerar resposta
         itens_proximos = []
         for _ in range(qtd_itens):
             escolhido = random.choices(itens, weights=pesos, k=1)[0]
@@ -60,7 +58,7 @@ class ItensProximosView(APIView):
             else:
                 lat, lon = gerar_coordenadas(usuario_lat, usuario_lon)
 
-            itens_proximos.append({
+            item_data = {
                 "id": escolhido.id,
                 "nome": escolhido.nome,
                 "tipo": escolhido.tipo,
@@ -68,6 +66,15 @@ class ItensProximosView(APIView):
                 "longitude": lon,
                 "peso": escolhido._peso_float,
                 "imagem": str(escolhido.imagem) if escolhido.imagem else None,
-            })
+            }
+
+            # Se o item for uma poção, adiciona o bônus
+            if escolhido.tipo == Item.Tipo.POC:
+                bonus_aleatorio = round(random.uniform(5.0, 25.0), 2)
+                item_data['bonus_captura'] = bonus_aleatorio
+
+            
+            # Linha fora do 'if'.
+            itens_proximos.append(item_data)
 
         return Response(itens_proximos)

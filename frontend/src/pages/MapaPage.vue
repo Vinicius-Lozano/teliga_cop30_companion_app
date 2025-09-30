@@ -1,12 +1,10 @@
 <template>
   <div>
-    <!-- Banner -->
     <header class="banner">
       <h1>Te Liga!</h1>
       <p>Bem-vindo(a) ao mapa de eventos!</p>
     </header>
 
-    <!-- Mapa -->
     <q-no-ssr>
       <l-map
         v-if="isMounted"
@@ -20,7 +18,6 @@
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
-        <!-- Marker do usuário -->
         <l-marker
           v-if="usuarioPos"
           :lat-lng="usuarioPos"
@@ -29,7 +26,6 @@
           <l-popup>Você está aqui</l-popup>
         </l-marker>
 
-        <!-- Loop para Eventos Fixos (Palestras) -->
         <l-marker
           v-for="evento in eventosFixosValidos"
           :key="`evento-${evento.id}`"
@@ -39,15 +35,20 @@
           <l-popup>{{ evento.titulo }}</l-popup>
         </l-marker>
 
-        <!-- Loop para Itens (Fauna) -->
         <l-marker
           v-for="item in itensAleatoriosValidos"
-          :key="`item-${item.id}`"
+          :key="`item-${item.id}-${item.latitude}`"
           :lat-lng="[item.latitude, item.longitude]"
           :icon="getIcon(item.tipo)"
-          @click="irParaDetalhesItem(item.id)"
+          @click="handleItemClick(item)"
         >
-          <l-popup>{{ item.nome }}</l-popup>
+          <l-popup>
+            <b>{{ item.nome }}</b>
+            <div v-if="item.tipo === 'POC'">
+              Bônus de Captura: +{{ item.bonus_captura }}%
+              <br><small>Clique no item para coletar</small>
+            </div>
+          </l-popup>
         </l-marker>
       </l-map>
     </q-no-ssr>
@@ -63,6 +64,7 @@ import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { api } from 'boot/axios'
+import { useQuasar } from 'quasar'
 
 // Corrige ícones padrão do Leaflet
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
@@ -72,6 +74,7 @@ delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl })
 
 const router = useRouter()
+const $q = useQuasar()
 const isMounted = ref(false)
 const mapRef = ref(null)
 const mapCenter = ref([-1.4558, -48.4902])
@@ -87,6 +90,7 @@ function getIcon(tipo) {
   let url = '/icons/item_padrao.png';
   if (tipo === 'ANI') url = '/icons/animal.png';
   if (tipo === 'PLA') url = '/icons/planta.png';
+  if (tipo === 'POC') url = '/icons/potion.svg'; 
   return L.icon({ iconUrl: url, iconSize: [largura, altura], iconAnchor: anchor });
 }
 
@@ -96,14 +100,34 @@ const usuarioIcon = L.icon({
   iconAnchor: [20, 40]
 })
 
-// CORREÇÃO: As rotas foram trocadas para apontar para os componentes corretos.
 function irParaDetalhesEvento(id) {
-  // Eventos fixos (palestras) vão para a página de detalhes de eventos
   router.push(`/details/${id}`)
 }
-function irParaDetalhesItem(id) {
-  // Itens (fauna) vão para a página de detalhes de itens
-  router.push(`/item/${id}`)
+
+
+function coletarPocao(pocao) {
+  const mochila = JSON.parse(localStorage.getItem("mochila")) || [];
+  mochila.push({ ...pocao, tipoConteudo: "item" });
+  localStorage.setItem("mochila", JSON.stringify(mochila));
+
+  itensAleatorios.value = itensAleatorios.value.filter(
+    (item) => !(item.id === pocao.id && item.latitude === pocao.latitude)
+  );
+
+  $q.notify({
+    message: `${pocao.nome} coletada e guardada na mochila!`,
+    color: 'positive',
+    icon: 'check_circle',
+    position: 'top'
+  });
+}
+
+function handleItemClick(item) {
+  if (item.tipo === 'POC') {
+    coletarPocao(item);
+  } else {
+    router.push(`/item/${item.id}?lat=${item.latitude}&lon=${item.longitude}`);
+  }
 }
 
 const eventosFixosValidos = computed(() => eventosFixos.value.filter(e => e.latitude != null && e.longitude != null))
@@ -116,23 +140,20 @@ async function obterPosicaoUsuario() {
       usuarioPos.value = [position.coords.latitude, position.coords.longitude]
       mapCenter.value = usuarioPos.value
       if (mapRef.value?.mapObject) mapRef.value.mapObject.setView(usuarioPos.value, 13)
-      // Após encontrar o usuário, busca os itens próximos
       await carregarItensProximos()
     },
     (err) => console.error('Erro ao obter localização:', err)
   )
 }
 
-// Esta função agora é a única fonte dos itens aleatórios (fauna)
 async function carregarItensProximos() {
   if (!usuarioPos.value) return;
   try {
     const response = await api.post('/api/itens_proximos/', {
         latitude: usuarioPos.value[0],
         longitude: usuarioPos.value[1],
-        qtd_itens: 10 // Pede 10 itens próximos ao backend
+        qtd_itens: 10
     })
-    // Substitui a lista de itens com os novos itens encontrados perto do usuário
     itensAleatorios.value = response.data;
   } catch (err) {
     console.error('Erro ao carregar itens próximos:', err)
@@ -152,7 +173,6 @@ async function carregarEventosFixos() {
 onMounted(async () => {
   isMounted.value = true
   obterPosicaoUsuario()
-  // Carrega apenas os eventos fixos ao iniciar
   await carregarEventosFixos();
 })
 </script>
