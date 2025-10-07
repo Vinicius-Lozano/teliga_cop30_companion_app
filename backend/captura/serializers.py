@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import MochilaItem, MochilaEvento
+from .models import MochilaItem, MochilaEvento, ConversaQuestoes, CapturaProgresso
 from item.serializers import ItemSerializer
 from events.serializers import EventoSerializer
 from item.models import Item
@@ -20,3 +20,17 @@ class MochilaEventoSerializer(serializers.ModelSerializer):
     class Meta:
         model = MochilaEvento
         fields = ['id', 'evento', 'evento_id', 'captured_at']
+
+class ConversaQuestoesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConversaQuestoes
+        fields = ['id', 'item', 'pergunta', 'escolha_a', 'escolha_b', 'escolha_c']
+
+class RespostaSerializer(serializers.Serializer):
+    resposta = serializers.CharField(max_length=1)
+
+class CapturaProgressoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CapturaProgresso
+        fields = ['id', 'user', 'item', 'chance', 'capturado']
+        read_only_fields = ['user', 'chance', 'capturado']

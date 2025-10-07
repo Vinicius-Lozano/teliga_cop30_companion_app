@@ -8,8 +8,9 @@ const routes = [
       { path: 'register', component: () => import('pages/Register.vue') },
       { path: 'details/:id', component: () => import('pages/EventoDetails.vue'), props: true },
 
-      // CORREÇÃO: Adicionada a rota para a página de detalhes dos itens (fauna)
-      { path: 'item/:id', component: () => import('pages/ItemDetails.vue'), props: true },
+      
+      { path: 'item/:id', name:'ItemDetalhes', component: () => import('pages/ItemDetails.vue'), props: true },
+      { path: 'item/:id/captura', name: 'PaginaDeCaptura', component: () => import('pages/CapturaPage.vue')},
       { path: 'mochila', component: () => import('src/pages/MochilaPage.vue')},
 
       { path: 'teste-back', component: () => import('pages/TesteConexaoBack.vue') },

@@ -18,13 +18,11 @@
             <div class="text-body1 q-mt-md" style="color:#374151; line-height:1.7">
               {{ item.descricao }}
             </div>
-
-            <q-btn 
-              color="green-8" 
-              icon="backpack" 
-              label="Guardar na Mochila" 
+            <q-btn
+              color="green-8"
+              label="Capturar"
               class="q-mt-lg"
-              @click="guardarNaMochila" 
+              :to="{ name: 'PaginaDeCaptura', params: { id: item.id } }"
             />
           </div>
         </div>
@@ -83,16 +81,16 @@ function getIconUrl(tipo) {
 }
 
 // Função para guardar o item na mochila 
-function guardarNaMochila() {
-  let mochila = JSON.parse(localStorage.getItem('mochila')) || []
-  if (!mochila.find(i => i.id === item.value.id && i.tipoConteudo === 'item')) {
-    mochila.push({ ...item.value, tipoConteudo: 'item' })
-    localStorage.setItem('mochila', JSON.stringify(mochila))
-    $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
-  } else {
-    $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
-  }
-}
+//function guardarNaMochila() {
+//  let mochila = JSON.parse(localStorage.getItem('mochila')) || []
+//  if (!mochila.find(i => i.id === item.value.id && i.tipoConteudo === 'item')) {
+//    mochila.push({ ...item.value, tipoConteudo: 'item' })
+//   localStorage.setItem('mochila', JSON.stringify(mochila))
+//    $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
+//  } else {
+//    $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
+//  }
+//}
 
 onMounted(async () => {
   try {
