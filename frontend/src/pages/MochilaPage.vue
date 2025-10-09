@@ -7,10 +7,9 @@
     </div>
 
     <div class="text-subtitle1 text-grey-7 q-mb-xl">
-      Aqui ficam os itens e eventos que você capturou.
+      Aqui ficam os itens, poções e eventos que você capturou.
     </div>
 
-    <!-- ITENS -->
     <div class="q-mb-xl">
       <div class="row items-center q-mb-sm">
         <q-icon name="inventory_2" size="sm" class="q-mr-sm text-primary" />
@@ -33,7 +32,7 @@
           <q-card-section>
             <div class="text-subtitle1 text-primary">{{ item.nome }}</div>
             <div class="text-caption text-grey-7">{{ item.descricao }}</div>
-            <div v-if="item.bonus_captura" class="text-positive text-weight-bold q-mt-sm">
+            <div v-if="item.tipo === 'POC'" class="text-positive text-weight-bold q-mt-sm">
               Bônus de Captura: +{{ item.bonus_captura }}%
             </div>
           </q-card-section>
@@ -41,7 +40,36 @@
       </div>
     </div>
 
-    <!-- EVENTOS -->
+    <div class="q-mb-xl">
+      <div class="row items-center q-mb-sm">
+        <q-icon name="science" size="sm" class="q-mr-sm text-indigo" />
+        <div class="text-h6">Poções</div>
+      </div>
+      <q-separator />
+
+      <div v-if="pocoes.length === 0" class="text-grey text-italic q-mt-md">
+        Você ainda não possui nenhuma poção.
+      </div>
+
+      <div class="q-mt-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <q-card
+          v-for="pocao in pocoes"
+          :key="pocao.id"
+          flat
+          bordered
+          class="q-pa-md hover-card"
+        >
+          <q-card-section>
+            <div class="text-subtitle1 text-indigo">{{ pocao.nome }}</div>
+            <div class="text-caption text-grey-7">{{ pocao.descricao }}</div>
+            <div v-if="pocao.chance_bonus" class="text-deep-purple text-weight-bold q-mt-sm">
+              💫 Chance de Captura: {{ pocao.chance_bonus }}%
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
     <div class="q-mb-xl">
       <div class="row items-center q-mb-sm">
         <q-icon name="event" size="sm" class="q-mr-sm text-secondary" />
@@ -54,34 +82,35 @@
       </div>
 
       <div class="q-mt-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <q-card
-            v-for="evento in eventos"
-            :key="evento.id"
-            flat
-            bordered
-            class="q-pa-md hover-card relative-position cursor-pointer"
-            @click="verDetalhesEvento(evento)"
-          >
-          <q-card-section class="row items-center justify-between">
-            <div class="text-subtitle1 text-secondary">{{ evento.titulo }}</div>
-            <q-btn
-              dense
-              flat
-              round
-              icon="delete"
-              color="negative"
-              size="sm"
-              @click.stop="confirmarRemocao(evento)"
-            />
+        <q-card
+          v-for="evento in eventos"
+          :key="evento.id"
+          flat
+          bordered
+          class="q-pa-md hover-card relative-position cursor-pointer"
+          @click="verDetalhesEvento(evento)"
+        >
+          <q-card-section>
+            <div class="row items-center justify-between">
+              <div class="text-subtitle1 text-secondary">{{ evento.titulo }}</div>
+              <q-btn
+                dense
+                flat
+                round
+                icon="delete"
+                color="negative"
+                size="sm"
+                @click.stop="confirmarRemocao(evento)"
+              />
+            </div>
+            <div class="text-caption text-grey-7">
+              Categoria: {{ evento.categoria }}
+            </div>
           </q-card-section>
-          <div class="text-caption text-grey-7">
-            Categoria: {{ evento.categoria }}
-          </div>
         </q-card>
       </div>
     </div>
 
-    <!-- DIALOG REMOVER -->
     <q-dialog v-model="dialogAberto" persistent>
       <q-card>
         <q-card-section class="row items-center">
@@ -106,14 +135,15 @@
 
 <script setup>
 import { ref, onMounted } from "vue"
-import { useRouter } from "vue-router"
-import { api } from "boot/axios"
-import { useQuasar } from "quasar"
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { api } from 'boot/axios' // Verifique se o caminho desta importação está correto
 
 const router = useRouter()
 const $q = useQuasar()
 
 const itens = ref([])
+const pocoes = ref([])
 const eventos = ref([])
 const dialogAberto = ref(false)
 const eventoSelecionado = ref(null)
@@ -129,6 +159,16 @@ onMounted(async () => {
       bonus_captura: i.item.bonus_captura,
       tipo: i.item.tipo
     }))
+    .filter(i => !i.nome.toLowerCase().includes('poção'))
+
+    // Buscar poções
+    const resPocoes = await api.get('/api/capturas/pocoes/')
+    pocoes.value = resPocoes.data.map(p => ({
+      id: p.item.id,
+      nome: p.item.nome,
+      descricao: p.item.descricao,
+      chance_bonus: p.chance_bonus || p.item.bonus_captura || 0
+    }))
 
     // Buscar eventos
     const resEventos = await api.get('/api/capturas/eventos/')
@@ -143,32 +183,33 @@ onMounted(async () => {
   }
 })
 
-// VER DETALHES DO EVENTO
 function verDetalhesEvento(evento) {
   router.push(`/details/${evento.id}`)
 }
 
-// CONFIRMAR REMOÇÃO
 function confirmarRemocao(evento) {
   eventoSelecionado.value = evento
   dialogAberto.value = true
 }
 
-// REMOVER EVENTO DO BACKEND
 async function removerEventoConfirmado() {
   if (!eventoSelecionado.value) return
 
   try {
-    await api.delete(`/api/mochila/eventos/${eventoSelecionado.value.id}/`)
-    eventos.value = eventos.value.filter(e => e.id !== eventoSelecionado.value.id)
-    $q.notify({ type: 'positive', message: 'Evento removido com sucesso!' })
-  } catch (err) {
-    console.error(err)
-    $q.notify({ type: 'negative', message: 'Erro ao remover evento' })
-  }
+    const eventoId = eventoSelecionado.value.id
+    await api.delete(`/api/capturas/eventos/${eventoId}/`)
 
-  dialogAberto.value = false
-  eventoSelecionado.value = null
+    eventos.value = eventos.value.filter(e => e.id !== eventoId)
+
+    $q.notify({ type: 'positive', message: 'Evento removido com sucesso!' })
+
+  } catch (error) {
+    console.error('Erro ao remover evento:', error)
+    $q.notify({ type: 'negative', message: 'Não foi possível remover o evento.' })
+  } finally {
+    dialogAberto.value = false
+    eventoSelecionado.value = null
+  }
 }
 </script>
 

@@ -13,7 +13,7 @@ from decouple import config
 from pathlib import Path
 from supabase import create_client
 from datetime import timedelta
-
+import dj_database_url  # ✅ necessário para converter o DATABASE_URL do Supabase
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n)23@bp=w5#v&4og%)(piv1r(iurp_coai9gzp=m9pb4_u)_(^'
+SECRET_KEY = config("SECRET_KEY", default='django-insecure-n)23@bp=w5#v&4og%)(piv1r(iurp_coai9gzp=m9pb4_u)_(^')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*", cast=lambda v: v.split(","))
 
 
 # Application definition
@@ -95,15 +95,27 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# --------------------------------------------------------------------------
+# Configuração automática para o Supabase (PostgreSQL)
+# Use no .env:
+# DATABASE_URL=postgresql://postgres:[SENHA]@db.xxxxxx.supabase.co:5432/postgres
+DATABASE_URL = config("DATABASE_URL", default=None)
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    # fallback local (sqlite3) — útil em dev sem Supabase
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
+
+# Auth user model
 AUTH_USER_MODEL = 'users.Usuario'
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -123,90 +135,78 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+# --------------------------------------------------------------------------
+LANGUAGE_CODE = 'pt-br'
+TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+# --------------------------------------------------------------------------
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 # CORS Configuration
 # --------------------------------------------------------------------------
-# Lista de origens que têm permissão para fazer requisições cross-site.
-# Ideal para produção, listando apenas os domínios do seu frontend.
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:9000",
     "http://127.0.0.1:9000",
 ]
+CORS_ALLOW_CREDENTIALS = True
+
+
+# CSRF Configuration
+# --------------------------------------------------------------------------
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:9000",
+    "http://127.0.0.1:9000",
+]
+
 
 # Django REST Framework Configuration
 # --------------------------------------------------------------------------
-# This tells Django REST Framework that all API views should, by default,
-# use JWT for authentication.
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # This ensures that, by default, API endpoints are accessible for read
-    # operations (GET, HEAD, OPTIONS) without authentication, but require
-    # authentication for write operations (POST, PUT, PATCH, DELETE).
-    # This is a flexible default for many projects.
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
     'DEFAULT_SCHEMA_CLASS': 'core.schema.AppNameAutoSchema',
 }
 
+
 # dj-rest-auth Configuration
 # --------------------------------------------------------------------------
 REST_AUTH = {
-    # This is the key setting. It tells dj-rest-auth to use JWT for its
-    # login/logout/registration endpoints, which makes it stop looking for
-    # the default 'rest_framework.authtoken' model and resolves the error.
     'USE_JWT': True,
-    # Explicitly tell dj-rest-auth not to use a token model from the database,
-    # which is the correct behavior for JWT.
     'TOKEN_MODEL': None,
-    # This ensures the refresh token is sent in the response body, which is
-    # easier for JavaScript frontends to handle.
     'JWT_AUTH_HTTPONLY': False,
-    # This tells dj-rest-auth to use your custom serializer to add extra
-    # claims (like username and email) to the JWT.
     'JWT_TOKEN_CLAIMS_SERIALIZER': 'users.serializers.MyTokenObtainPairSerializer',
     'REGISTER_SERIALIZER': 'users.serializers.CustomRegisterSerializer',
     'USER_DETAILS_SERIALIZER': 'users.serializers.UsuarioSerializer',
 }
 
+
 # django-allauth Configuration 
 # --------------------------------------------------------------------------
 SITE_ID = 1
-ACCOUNT_EMAIL_VERIFICATION = 'none'   # dev; em prod usar 'optional' ou 'mandatory'
-
-ACCOUNT_LOGIN_METHODS = {'username', 'email'}   
-
-
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = {
     'username': {'required': True},
     'email':    {'required': True},
     'password1':{'required': True},
     'password2':{'required': True},
 }
-
 ACCOUNT_UNIQUE_EMAIL = True
+
 
 # drf-spectacular Configuration
 # --------------------------------------------------------------------------
@@ -214,7 +214,6 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'Te Liga! API',
     'DESCRIPTION': 'Documentação da API do projeto Te Liga!',
     'VERSION': '1.0.0',
-    # Adiciona a opção de autenticação JWT no Swagger UI
     'COMPONENT_SCHEMAS': {
         'securitySchemes': {
             'BearerAuth': {
@@ -227,17 +226,22 @@ SPECTACULAR_SETTINGS = {
     'SECURITY': [{'BearerAuth': []}],
 }
 
-# Supabase
+
+# Supabase Client (para outras integrações)
 # --------------------------------------------------------------------------
-SUPABASE_URL = config("SUPABASE_URL")
-SUPABASE_KEY = config("SUPABASE_KEY")
+SUPABASE_URL = config("SUPABASE_URL", default=None)
+SUPABASE_KEY = config("SUPABASE_KEY", default=None)
+SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY", default=None)
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY or SUPABASE_KEY)
 
+
+# JWT Configuration
+# --------------------------------------------------------------------------
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=6),   
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),   
-    "ROTATE_REFRESH_TOKENS": True,                 
-    "BLACKLIST_AFTER_ROTATION": True,             
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=6),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
