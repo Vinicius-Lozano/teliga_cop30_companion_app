@@ -22,12 +22,12 @@
             </div>
 
             <!-- Botão para guardar na mochila -->
-            <q-btn 
-              color="green-8" 
-              icon="backpack" 
-              label="Guardar na Mochila" 
+            <q-btn
+              color="green-8"
+              icon="backpack"
+              label="Guardar na Mochila"
               class="q-mt-lg"
-              @click="guardarNaMochila" 
+              @click="guardarNaMochila"
             />
           </div>
         </div>
@@ -86,16 +86,26 @@ function getImageUrl(imagePath) {
   return imagePath.startsWith('http') ? imagePath : `${backendUrl}${imagePath}`
 }
 
-// Função para guardar evento na mochila
-function guardarNaMochila() {
-  let mochila = JSON.parse(localStorage.getItem('mochila')) || []
+// Função para guardar evento na mochila (somente backend)
+async function guardarNaMochila() {
+  if (!evento.value || !evento.value.id) {
+    $q.notify({ type: 'negative', message: 'Evento inválido.' })
+    return
+  }
 
-  if (!mochila.find(e => e.id === evento.value.id && e.tipoConteudo === 'evento')) {
-    mochila.push({ ...evento.value, tipoConteudo: 'evento' })
-    localStorage.setItem('mochila', JSON.stringify(mochila))
+  try {
+    // POST para rota que cria uma captura de evento no backend
+    await api.post('/api/capturas/eventos/', { evento_id: evento.value.id })
     $q.notify({ type: 'positive', message: `${evento.value.titulo} foi guardado na mochila!` })
-  } else {
-    $q.notify({ type: 'info', message: `${evento.value.titulo} já está na mochila!` })
+  } catch (err) {
+    // Se a API já responder como duplicado, tratamos como info
+    const status = err?.response?.status
+    if (status === 400 || status === 409) {
+      $q.notify({ type: 'info', message: `${evento.value.titulo} já está na mochila!` })
+    } else {
+      console.error('Erro ao guardar evento na mochila:', err)
+      $q.notify({ type: 'negative', message: 'Erro ao salvar na mochila.' })
+    }
   }
 }
 

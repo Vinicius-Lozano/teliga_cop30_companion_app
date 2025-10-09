@@ -90,7 +90,7 @@ function getIcon(tipo) {
   let url = '/icons/item_padrao.png';
   if (tipo === 'ANI') url = '/icons/animal.png';
   if (tipo === 'PLA') url = '/icons/planta.png';
-  if (tipo === 'POC') url = '/icons/potion.svg'; 
+  if (tipo === 'POC') url = '/icons/potion.svg';
   return L.icon({ iconUrl: url, iconSize: [largura, altura], iconAnchor: anchor });
 }
 
@@ -104,22 +104,58 @@ function irParaDetalhesEvento(id) {
   router.push(`/details/${id}`)
 }
 
+/*
+  Agora: coletarPocao salva **no backend**.
+  Rota esperada: POST /api/capturas/pocoes/  com { pocao_id: <id> }
+  Se o backend usa outro nome de rota/payload, ajuste aqui.
+*/
+async function coletarPocao(pocao) {
+  if (!pocao || !pocao.id) {
+    $q.notify({ message: 'Poção inválida.', color: 'negative', position: 'top' })
+    return
+  }
 
-function coletarPocao(pocao) {
-  const mochila = JSON.parse(localStorage.getItem("mochila")) || [];
-  mochila.push({ ...pocao, tipoConteudo: "item" });
-  localStorage.setItem("mochila", JSON.stringify(mochila));
+  try {
+    // tenta salvar no backend
+    await api.post('/api/capturas/pocoes/', { pocao_id: pocao.id })
 
-  itensAleatorios.value = itensAleatorios.value.filter(
-    (item) => !(item.id === pocao.id && item.latitude === pocao.latitude)
-  );
+    // remove o item visível do mapa (coletado)
+    itensAleatorios.value = itensAleatorios.value.filter(
+      (item) => !(item.id === pocao.id && item.latitude === pocao.latitude)
+    );
 
-  $q.notify({
-    message: `${pocao.nome} coletada e guardada na mochila!`,
-    color: 'positive',
-    icon: 'check_circle',
-    position: 'top'
-  });
+    $q.notify({
+      message: `${pocao.nome} coletada e guardada na mochila!`,
+      color: 'positive',
+      icon: 'check_circle',
+      position: 'top'
+    });
+  } catch (err) {
+    const status = err?.response?.status
+    if (status === 400 || status === 409) {
+      $q.notify({
+        message: `${pocao.nome} já foi coletada.`,
+        color: 'info',
+        icon: 'info',
+        position: 'top'
+      });
+    } else if (status === 401) {
+      $q.notify({
+        message: 'Você precisa estar logado para coletar poções.',
+        color: 'warning',
+        position: 'top'
+      });
+      // opcional: redirecionar para login
+      // router.push('/login')
+    } else {
+      console.error('Erro ao coletar poção:', err)
+      $q.notify({
+        message: 'Erro ao coletar poção. Tente novamente.',
+        color: 'negative',
+        position: 'top'
+      });
+    }
+  }
 }
 
 function handleItemClick(item) {
