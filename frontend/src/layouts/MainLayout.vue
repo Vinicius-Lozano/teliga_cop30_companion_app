@@ -20,10 +20,13 @@
               to="/admin/eventos"
             />
 
-            <!-- Menu do Usuário -->
+            <!-- Menu do Usuário com Perfil -->
             <q-btn flat dense :label="`Olá, ${userName}`" icon="account_circle">
               <q-menu>
-                <q-list style="min-width: 100px">
+                <q-list style="min-width: 150px">
+                  <q-item v-close-popup clickable @click="$router.push('/profile')">
+                    <q-item-section>Perfil</q-item-section>
+                  </q-item>
                   <q-item v-close-popup clickable @click="handleLogout">
                     <q-item-section>Sair</q-item-section>
                   </q-item>
@@ -64,19 +67,15 @@ defineOptions({
 const router = useRouter()
 const route = useRoute()
 
-// 1. Criar estado reativo local para substituir a store
 const isAuthenticated = ref(false)
 const user = ref(null)
 
-// 2. Criar computeds que dependem do estado local
 const isAdmin = computed(() => user.value?.is_staff === true)
 const userName = computed(() => {
   if (!user.value) return 'Usuário'
-  // Opcional: use o primeiro nome se disponível, senão o username
   return user.value.first_name || user.value.username
 })
 
-// 3. Função para ler o localStorage e atualizar o estado reativo
 const updateUserState = () => {
   const token = localStorage.getItem('user_token')
   const userDataString = localStorage.getItem('user_data')
@@ -84,20 +83,17 @@ const updateUserState = () => {
   user.value = userDataString ? JSON.parse(userDataString) : null
 }
 
-// 4. Atualizar a função de logout
 function handleLogout () {
   localStorage.removeItem('user_token')
   localStorage.removeItem('user_data')
-  updateUserState() // Atualiza a UI imediatamente
+  updateUserState()
   router.push('/login')
 }
 
-// 5. Garantir que o estado seja verificado quando o layout é montado...
 onMounted(() => {
   updateUserState()
 })
 
-// 6. ...e também quando a rota muda (para refletir login/logout sem precisar recarregar a página)
 watch(
   () => route.path,
   () => {
@@ -111,3 +107,4 @@ watch(
   background: #2e7d32; /* Verde do banner da Home */
 }
 </style>
+
