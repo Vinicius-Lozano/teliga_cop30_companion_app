@@ -18,11 +18,13 @@
             <div class="text-body1 q-mt-md" style="color:#374151; line-height:1.7">
               {{ item.descricao }}
             </div>
+
+            <!-- Mantive a navegação para a página de captura -->
             <q-btn
               color="green-8"
               label="Capturar"
               class="q-mt-lg"
-              :to="{ name: 'PaginaDeCaptura', params: { id: item.id } }"
+              @click="guardarNaMochila" 
             />
           </div>
         </div>
@@ -78,33 +80,42 @@ function getIconUrl(tipo) {
   }
 }
 
-// Função para guardar o item na mochila 
-//function guardarNaMochila() {
-//  let mochila = JSON.parse(localStorage.getItem('mochila')) || []
-//  if (!mochila.find(i => i.id === item.value.id && i.tipoConteudo === 'item')) {
-//    mochila.push({ ...item.value, tipoConteudo: 'item' })
-//   localStorage.setItem('mochila', JSON.stringify(mochila))
-//    $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
-//  } else {
-//    $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
-//  }
-//}
+
+
+async function guardarNaMochila() {
+  if (!item.value || !item.value.id) {
+    $q.notify({ type: 'negative', message: 'Item inválido.' })
+    return
+  }
+
+  try {
+    await api.post('/api/capturas/items/', { item_id: item.value.id })
+    $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
+  } catch (err) {
+    const status = err?.response?.status
+    if (status === 400 || status === 409) {
+      $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
+    } else {
+      console.error('Erro ao guardar item na mochila:', err)
+      $q.notify({ type: 'negative', message: 'Erro ao salvar na mochila.' })
+    }
+  }
+}
 
 onMounted(async () => {
   try {
-    // 1. Busca os detalhes do item 
+    // 1. Busca os detalhes do item
     const response = await api.get(`/api/item/${route.params.id}/`)
     item.value = response.data
-    
+
     await nextTick()
-    
+
     // 2. Inicializa o mapa se o item tiver coordenadas válidas vindas da API
     if (item.value?.latitude != null && item.value?.longitude != null) {
-
       const latitude = parseFloat(item.value.latitude);
       const longitude = parseFloat(item.value.longitude);
 
-      const map = L.map('map').setView([latitude, longitude], 16) 
+      const map = L.map('map').setView([latitude, longitude], 16)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map)
@@ -118,7 +129,7 @@ onMounted(async () => {
       L.marker([latitude, longitude], { icon })
         .addTo(map)
         .bindPopup(`<b>${item.value.nome}</b>`)
-        .openPopup(); 
+        .openPopup();
     }
   } catch (err) {
     console.error('Erro ao carregar item:', err)
