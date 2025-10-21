@@ -18,13 +18,11 @@
             <div class="text-body1 q-mt-md" style="color:#374151; line-height:1.7">
               {{ item.descricao }}
             </div>
-
-            <!-- Mantive a navegação para a página de captura -->
             <q-btn
               color="green-8"
               label="Capturar"
               class="q-mt-lg"
-              @click="guardarNaMochila" 
+              :to="{ name: 'PaginaDeCaptura', params: { id: item.id } }"
             />
           </div>
         </div>
@@ -39,15 +37,7 @@
           {{ item.curiosidades }}
         </div>
       </div>
-
-      <div class="card q-pa-lg q-mb-xl">
-        <div class="section-title">
-          <q-icon name="public" color="green-8" />
-          Localização no mapa
-        </div>
-        <div id="map" class="map q-mb-md" style="height: 300px;"></div>
-      </div>
-    </div>
+    </div> <!-- Aqui fechamos corretamente o v-if="item" -->
 
     <div v-else class="text-center q-mt-xl">
       <q-spinner color="primary" size="3em" v-if="isLoading" />
@@ -60,77 +50,21 @@
   </q-page>
 </template>
 
+
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import { api } from 'boot/axios'
 
 const route = useRoute()
 const item = ref(null)
 const isLoading = ref(true)
 
-// Função para escolher o ícone de acordo com o tipo
-function getIconUrl(tipo) {
-  switch(tipo) {
-    case 'ANI': return '/icons/animal.png'
-    case 'PLA': return '/icons/planta.png'
-    default: return '/icons/item_padrao.png'
-  }
-}
-
-
-
-async function guardarNaMochila() {
-  if (!item.value || !item.value.id) {
-    $q.notify({ type: 'negative', message: 'Item inválido.' })
-    return
-  }
-
-  try {
-    await api.post('/api/capturas/items/', { item_id: item.value.id })
-    $q.notify({ type: 'positive', message: `${item.value.nome} foi guardado na mochila!` })
-  } catch (err) {
-    const status = err?.response?.status
-    if (status === 400 || status === 409) {
-      $q.notify({ type: 'info', message: `${item.value.nome} já está na mochila!` })
-    } else {
-      console.error('Erro ao guardar item na mochila:', err)
-      $q.notify({ type: 'negative', message: 'Erro ao salvar na mochila.' })
-    }
-  }
-}
 
 onMounted(async () => {
   try {
-    // 1. Busca os detalhes do item
     const response = await api.get(`/api/item/${route.params.id}/`)
     item.value = response.data
-
-    await nextTick()
-
-    // 2. Inicializa o mapa se o item tiver coordenadas válidas vindas da API
-    if (item.value?.latitude != null && item.value?.longitude != null) {
-      const latitude = parseFloat(item.value.latitude);
-      const longitude = parseFloat(item.value.longitude);
-
-      const map = L.map('map').setView([latitude, longitude], 16)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map)
-
-      const icon = L.icon({
-        iconUrl: getIconUrl(item.value.tipo),
-        iconSize: [40, 40],
-        iconAnchor: [20, 40]
-      })
-
-      L.marker([latitude, longitude], { icon })
-        .addTo(map)
-        .bindPopup(`<b>${item.value.nome}</b>`)
-        .openPopup();
-    }
   } catch (err) {
     console.error('Erro ao carregar item:', err)
   } finally {
@@ -140,18 +74,26 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.map {
-  width: 100%;
+.subtitle-chip {
+  background-color: #e0e0e0;
+  color: #333;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  display: inline-block;
 }
-.thumb-strip {
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 500;
   display: flex;
+  align-items: center;
   gap: 0.5rem;
-  overflow-x: auto;
-}
-.thumb {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: #333;
 }
 </style>
