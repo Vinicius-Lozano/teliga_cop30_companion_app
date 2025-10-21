@@ -69,7 +69,7 @@
 
         <q-card-actions vertical class="justify-center q-pa-lg">
           <q-btn label="Conversar" color="green" @click="abrirConversa" />
-          <q-btn label="Atacar" color="red" @click="atacar" />
+          <q-btn label="Paulada" color="red" @click="atacar" />
           <q-btn label="Ovo" color="red" @click="usarOvo" />
         </q-card-actions>
       </q-card-section>

@@ -61,7 +61,6 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { useQuasar } from 'quasar'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { api } from 'boot/axios'
@@ -69,7 +68,6 @@ import { api } from 'boot/axios'
 const route = useRoute()
 const item = ref(null)
 const isLoading = ref(true)
-const $q = useQuasar()
 
 // Função para escolher o ícone de acordo com o tipo
 function getIconUrl(tipo) {
