@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    MochilaItemListCreateView, MochilaEventoListCreateView,
+    MochilaItemListCreateView, MochilaEventoListCreateView, MochilaPocaoListCreateView,
     QuestaoView, QuestaoAleatoriaView,
     CapturaView, ConfirmarCapturaView, QuestaoPorItemView
 )
@@ -8,6 +8,7 @@ from .views import (
 urlpatterns = [
     path('capturas/items/', MochilaItemListCreateView.as_view(), name='captura-items'),
     path('capturas/eventos/', MochilaEventoListCreateView.as_view(), name='captura-eventos'),
+    path('capturas/pocoes/', MochilaPocaoListCreateView.as_view(), name='captura-pocoes'),
 
     path('captura/<int:item_id>/', CapturaView.as_view(), name='captura'),
     path('captura/<int:item_id>/confirmar/', ConfirmarCapturaView.as_view(), name='confirmar-captura'),
