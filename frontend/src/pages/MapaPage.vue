@@ -1,58 +1,64 @@
 <template>
-  <div>
-    <header class="banner">
-      <h1>Te Liga!</h1>
-      <p>Bem-vindo(a) ao mapa de eventos!</p>
-    </header>
+  <q-page class="q-pa-md green-bg">
+    <div class="q-pa-md flex flex-center">
+      <q-card class="main-card">
+        <q-card-section class="banner text-center">
+          <h1>Te Liga!</h1>
+          <p>Bem-vindo(a) ao mapa de eventos!</p>
+        </q-card-section>
 
-    <q-no-ssr>
-      <l-map
-        v-if="isMounted"
-        ref="mapRef"
-        style="height: 80vh; width: 100%;"
-        :zoom="13"
-        :center="mapCenter"
-      >
-        <l-tile-layer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
+        <q-card-section>
+          <q-no-ssr>
+            <l-map
+              v-if="isMounted"
+              ref="mapRef"
+              style="height: 70vh; width: 100%; border-radius: 1rem; overflow: hidden;"
+              :zoom="13"
+              :center="mapCenter"
+            >
+              <l-tile-layer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              />
 
-        <l-marker
-          v-if="usuarioPos"
-          :lat-lng="usuarioPos"
-          :icon="usuarioIcon"
-        >
-          <l-popup>Você está aqui</l-popup>
-        </l-marker>
+              <l-marker
+                v-if="usuarioPos"
+                :lat-lng="usuarioPos"
+                :icon="usuarioIcon"
+              >
+                <l-popup>Você está aqui</l-popup>
+              </l-marker>
 
-        <l-marker
-          v-for="evento in eventosFixosValidos"
-          :key="`evento-${evento.id}`"
-          :lat-lng="[evento.latitude, evento.longitude]"
-          @click="irParaDetalhesEvento(evento.id)"
-        >
-          <l-popup>{{ evento.titulo }}</l-popup>
-        </l-marker>
+              <l-marker
+                v-for="evento in eventosFixosValidos"
+                :key="`evento-${evento.id}`"
+                :lat-lng="[evento.latitude, evento.longitude]"
+                @click="irParaDetalhesEvento(evento.id)"
+              >
+                <l-popup>{{ evento.titulo }}</l-popup>
+              </l-marker>
 
-        <l-marker
-          v-for="item in itensAleatoriosValidos"
-          :key="`item-${item.id}-${item.latitude}`"
-          :lat-lng="[item.latitude, item.longitude]"
-          :icon="getIcon(item.tipo)"
-          @click="handleItemClick(item)"
-        >
-          <l-popup>
-            <b>{{ item.nome }}</b>
-            <div v-if="item.tipo === 'POC'">
-              Bônus de Captura: +{{ item.bonus_captura }}%
-              <br><small>Clique no item para coletar</small>
-            </div>
-          </l-popup>
-        </l-marker>
-      </l-map>
-    </q-no-ssr>
-  </div>
+              <l-marker
+                v-for="item in itensAleatoriosValidos"
+                :key="`item-${item.id}-${item.latitude}`"
+                :lat-lng="[item.latitude, item.longitude]"
+                :icon="getIcon(item.tipo)"
+                @click="handleItemClick(item)"
+              >
+                <l-popup>
+                  <b>{{ item.nome }}</b>
+                  <div v-if="item.tipo === 'POC'">
+                    Bônus de Captura: +{{ item.bonus_captura }}%
+                    <br /><small>Clique no item para coletar</small>
+                  </div>
+                </l-popup>
+              </l-marker>
+            </l-map>
+          </q-no-ssr>
+        </q-card-section>
+      </q-card>
+    </div>
+  </q-page>
 </template>
 
 <script setup>
@@ -214,12 +220,55 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.banner {
-  background-color: #2e7d32;
-  color: white;
-  text-align: center;
-  padding: 2rem 1rem;
+
+.main-card {
+  width: 100%;
+  max-width: 1000px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
-.banner h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
-.banner p { font-size: 1.2rem; margin: 0; }
+
+.banner {
+  background: linear-gradient(90deg, #2e7d32, #43a047);
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  padding: 2rem 1rem;
+  border-bottom: 4px solid #66bb6a;
+}
+
+.banner h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  letter-spacing: 1px;
+}
+
+.banner p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  margin: 0;
+}
+
+/* POPUPS DO MAPA */
+.leaflet-popup-content-wrapper {
+  background: white;
+  color: #333;
+  font-size: 0.95rem;
+  border-radius: 10px;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+b {
+  color: #2e7d32;
+  font-weight: 600;
+}
+small {
+  color: #777;
+  font-size: 0.8rem;
+}
 </style>
