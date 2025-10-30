@@ -86,7 +86,7 @@ function getImageUrl(imagePath) {
   return imagePath.startsWith('http') ? imagePath : `${backendUrl}${imagePath}`
 }
 
-// Função para guardar evento na mochila (somente backend)
+// Função para guardar evento na mochila 
 async function guardarNaMochila() {
   if (!evento.value || !evento.value.id) {
     $q.notify({ type: 'negative', message: 'Evento inválido.' })
@@ -98,7 +98,6 @@ async function guardarNaMochila() {
     await api.post('/api/capturas/eventos/', { evento_id: evento.value.id })
     $q.notify({ type: 'positive', message: `${evento.value.titulo} foi guardado na mochila!` })
   } catch (err) {
-    // Se a API já responder como duplicado, tratamos como info
     const status = err?.response?.status
     if (status === 400 || status === 409) {
       $q.notify({ type: 'info', message: `${evento.value.titulo} já está na mochila!` })

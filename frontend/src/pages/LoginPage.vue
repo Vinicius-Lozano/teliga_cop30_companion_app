@@ -1,5 +1,5 @@
 <template>
-  <q-page class="flex bg-grey-2">
+  <q-page class="flex">
 
     <div class="column justify-center items-start q-pa-xl" style="flex: 1;">
       <div class="text-h2 text-green-10 font-weight-bold">Te liga!</div>

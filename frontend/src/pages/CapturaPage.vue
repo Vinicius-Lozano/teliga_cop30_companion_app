@@ -22,7 +22,6 @@
               <span class="text-h5" style="color:#166534; font-weight: 700;">Capturar</span>
             </div>
 
-            <!-- Espaço flexível para empurrar os botões para baixo -->
             <div style="flex-grow:1;"></div>
 
             <!-- Botões na parte inferior -->
@@ -122,7 +121,6 @@ const resultado = ref(null)
 const opcoes = ref({})
 
 onMounted(async () => {
-  // Pré-carrega som
   somBonk.value = new Audio('/sounds/bonk.mp3')
   somBonk.value.volume = 0.8
 
@@ -238,7 +236,7 @@ function fecharDialogo() {
   margin: auto;
   border-radius: 16px;
   padding: 16px;
-  background-color: #ffffff; /* verde bem claro */
+  background-color: #ffffff;
   display: flex;
   flex-direction: column;
 }

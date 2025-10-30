@@ -59,7 +59,12 @@ class CapturaProgresso(models.Model):
         self.save()
         return self.chance
 
-
+    def mudar_chance(self, valor):
+        """Modifica a chance sem ultrapassar 0–1."""
+        self.chance = max(0, min(1, self.chance + valor))
+        self.save()
+        return self.chance
+    
 class ConversaQuestoes(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='conversa_questoes')
     pergunta = models.CharField(max_length=255)
