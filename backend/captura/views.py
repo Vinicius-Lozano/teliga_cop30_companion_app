@@ -20,7 +20,52 @@ from item.models import Item
 # 🧳 MOCHILA
 # ===========================
 
+# --- NOVAS VIEWS SEPARADAS ---
+
+class MochilaFaunaListView(generics.ListAPIView):
+    """ Retorna apenas os itens do tipo 'Animal' (Fauna) da mochila """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MochilaItemSerializer
+
+    def get_queryset(self):
+        return MochilaItem.objects.filter(
+            user=self.request.user, 
+            item__tipo=Item.Tipo.ANI
+        ).select_related('item')
+
+
+class MochilaFloraListView(generics.ListAPIView):
+    """ Retorna apenas os itens do tipo 'Planta' (Flora) da mochila """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MochilaItemSerializer
+
+    def get_queryset(self):
+        return MochilaItem.objects.filter(
+            user=self.request.user, 
+            item__tipo=Item.Tipo.PLA
+        ).select_related('item')
+
+
+class MochilaItensListView(generics.ListAPIView):
+    """ Retorna apenas itens 'Sem Tipo' (NEN) da mochila """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MochilaItemSerializer
+
+    def get_queryset(self):
+        # Filtra apenas por itens do tipo 'NEN' (itens comuns)
+        return MochilaItem.objects.filter(
+            user=self.request.user,
+            item__tipo=Item.Tipo.NEN
+        ).select_related('item')
+
+
+# --- VIEWS ANTIGAS (COM AJUSTES) ---
+
 class MochilaItemListCreateView(generics.ListCreateAPIView):
+    """ 
+    View original - Agora funciona como um 'adicionar genérico' 
+    (Não será mais usada para LISTAR, usaremos as views acima)
+    """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = MochilaItemSerializer
 
@@ -31,7 +76,10 @@ class MochilaItemListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         item = serializer.validated_data['item']
+        
+        # O 'foi_captura_forcada' é setado pelo ConfirmarCapturaView
         captura, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
+        
         out = self.get_serializer(captura)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
@@ -53,11 +101,16 @@ class MochilaEventoListCreateView(generics.ListCreateAPIView):
 
 
 class MochilaPocaoListCreateView(generics.ListCreateAPIView):
+    """ Lista e cria Poções """
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = MochilaPocaoSerializer
+    serializer_class = MochilaPocaoSerializer # Serializer correto
 
     def get_queryset(self):
-        return MochilaPocao.objects.filter(user=self.request.user).select_related('item')
+        # Filtra para trazer apenas poções
+        return MochilaPocao.objects.filter(
+            user=self.request.user, 
+            item__tipo=Item.Tipo.POC
+        ).select_related('item')
 
     def create(self, request, *args, **kwargs):
         pocao_id = request.data.get('pocao_id') or request.data.get('item_id')
@@ -65,15 +118,16 @@ class MochilaPocaoListCreateView(generics.ListCreateAPIView):
             return Response({"detail": "Campo 'pocao_id' ou 'item_id' é obrigatório."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        item = get_object_or_404(Item, pk=pocao_id)
+        # Garante que o item é uma poção
+        item = get_object_or_404(Item, pk=pocao_id, tipo=Item.Tipo.POC)
 
-        # Cria também na mochila principal (para aparecer na UI)
-        mochila_item, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
+        # Adiciona na mochila de poções
+        mochila_pocao, created = MochilaPocao.objects.get_or_create(user=request.user, item=item)
 
-        # Mantém registro separado (opcional, para rastrear poções)
-        MochilaPocao.objects.get_or_create(user=request.user, item=item)
+        # Opcional: Adiciona na mochila principal também se sua lógica depender disso
+        # MochilaItem.objects.get_or_create(user=request.user, item=item)
 
-        out = MochilaItemSerializer(mochila_item)
+        out = self.get_serializer(mochila_pocao)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -130,7 +184,7 @@ class QuestaoPorItemView(views.APIView):
 
 
 # ===========================
-# 🧪 CAPTURA
+# 🧪 CAPTURA (ATUALIZADO)
 # ===========================
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -149,8 +203,15 @@ class CapturaView(views.APIView):
             return Response({"error": "Ação inválida."}, status=status.HTTP_400_BAD_REQUEST)
 
         progresso, _ = CapturaProgresso.objects.get_or_create(user=request.user, item_id=item_id)
+        
+        # --- LÓGICA ATUALIZADA ---
+        if acao == 'atacar':
+            progresso.foi_ataque_usado = True # Marca que usou ataque
+        
         nova_chance = progresso.aumentar_chance(valores[acao])
-        return Response({"chance": nova_chance, "acao": acao})
+        # progresso.save() é chamado dentro de aumentar_chance()
+        
+        return Response({"chance": nova_chance, "acao": acao, "foi_ataque": progresso.foi_ataque_usado})
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -160,19 +221,30 @@ class ConfirmarCapturaView(views.APIView):
     def post(self, request, item_id):
         progresso = CapturaProgresso.objects.filter(user=request.user, item_id=item_id).first()
         if not progresso:
-            return Response({"error": "Progresso não encontrado."}, status=4.04)
+            return Response({"error": "Progresso não encontrado."}, status=404)
         if progresso.chance < 100:
             return Response({"error": "Chance insuficiente para capturar."}, status=400)
 
         progresso.capturado = True
         progresso.save()
 
-        # Adiciona à mochila principal
-        MochilaItem.objects.get_or_create(user=request.user, item_id=item_id)
+        # --- LÓGICA ATUALIZADA ---
+        # Adiciona à mochila principal e passa o status da captura
+        mochila_item, created = MochilaItem.objects.get_or_create(
+            user=request.user, 
+            item_id=item_id,
+            defaults={'foi_captura_forcada': progresso.foi_ataque_usado} # Salva o status
+        )
+        
+        # Se o item já existia, atualiza o status (caso tenha sido capturado de novo)
+        if not created:
+            mochila_item.foi_captura_forcada = progresso.foi_ataque_usado
+            mochila_item.save()
 
         # Reseta o progresso para uma nova captura
         progresso.chance = 0
         progresso.capturado = False
+        progresso.foi_ataque_usado = False # Reseta o status do ataque
         progresso.save()
 
         return Response({"mensagem": "Item capturado com sucesso! Chance resetada para 0%."})

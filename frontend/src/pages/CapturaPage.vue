@@ -1,9 +1,7 @@
 <template>
   <q-page class="container q-pa-md position-relative green-bg">
-    <!-- CARD PRINCIPAL -->
     <q-card class="main-card">
       <q-card-section class="row no-wrap">
-        <!-- IMAGEM -->
         <div class="col-7 card-image relative-position">
           <q-img :src="item?.imagem" class="main-img" />
           <transition name="fade">
@@ -14,18 +12,14 @@
           </transition>
         </div>
 
-        <!-- AÇÕES -->
-          <q-card-section class="col-5 actions-col column" style="height: 100%; align-items: flex-start;">
-            <!-- Título no topo -->
+        <q-card-section class="col-5 actions-col column" style="height: 100%; align-items: flex-start;">
             <div class="row items-center q-mb-md">
               <q-icon name="backpack" color="green-8" size="28px" class="q-mr-sm" />
               <span class="text-h5" style="color:#166534; font-weight: 700;">Capturar</span>
             </div>
 
-            <!-- Espaço flexível para empurrar os botões para baixo -->
             <div style="flex-grow:1;"></div>
 
-            <!-- Botões na parte inferior -->
             <div class="column full-width">
               <q-btn label="Conversar" color="green" icon="chat" @click="abrirConversa" class="full-width q-mb-sm" />
               <q-btn label="Atacar" color="red" icon="bolt" @click="atacar" class="full-width q-mb-sm" />
@@ -34,7 +28,6 @@
           </q-card-section>
       </q-card-section>
 
-      <!-- BARRA DE PROGRESSO -->
       <q-card-section class="q-mt-md">
         <q-linear-progress
           :value="chance / 100"
@@ -56,7 +49,6 @@
       </q-card-section>
     </q-card>
 
-    <!-- DIALOGO DE PERGUNTA -->
     <q-dialog v-model="mostrarDialogo" persistent>
       <q-card style="min-width: 400px">
         <q-card-section>
@@ -165,24 +157,36 @@ async function usarOvo() {
   try {
     mostrarOvo.value = true
     setTimeout(() => (mostrarOvo.value = false), 1000)
-    await executarAcao('atacar')
+    await executarAcao('atacar') 
   } catch (err) {
     console.error(err)
   }
 }
 
-// Capturar item
 async function capturar() {
+  // $q.loading.show({ message: 'Salvando na mochila...' }) 
+
   try {
     const itemId = route.params.id
     await api.post(`/api/captura/${itemId}/confirmar/`)
     chance.value = 100
-    $q.notify({ type: 'positive', message: 'Item capturado!' })
 
-    // Redirecionar para a página do mapa
+    // Notificação de sucesso
+    $q.notify({
+        type: 'positive',
+        color: 'positive',
+        icon: 'pets',
+        message: `${item.value.nome} foi capturado e adicionado à mochila!`,
+        position: 'top'
+    })
+
+    // $q.loading.hide() 
     router.push({ name: 'mapa' }) 
-  } catch {
-    $q.notify({ type: 'negative', message: 'Erro ao executar ação' })
+  
+  } catch(err) {
+    // $q.loading.hide() 
+    console.error("Erro ao capturar:", err)
+    $q.notify({ type: 'negative', message: 'Erro ao confirmar a captura' })
   }
 }
 
@@ -211,7 +215,6 @@ async function responder(letra) {
     const res = await api.post(`/api/questao/${questao.value.id}/`, { resposta: letra })
     resultado.value = res.data
 
-    // Se acertou, aumenta chance
     if (res.data.acertou) {
       await executarAcao('conversar')
     }
@@ -221,7 +224,6 @@ async function responder(letra) {
   }
 }
 
-// Fechar diálogo
 function fecharDialogo() {
   mostrarDialogo.value = false
   resultado.value = null
@@ -238,7 +240,7 @@ function fecharDialogo() {
   margin: auto;
   border-radius: 16px;
   padding: 16px;
-  background-color: #ffffff; /* verde bem claro */
+  background-color: #ffffff; 
   display: flex;
   flex-direction: column;
 }
