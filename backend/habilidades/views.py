@@ -3,11 +3,12 @@ from rest_framework.response import Response
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-from .models import Habilidade, PlayerHabilidade, CapturaProgresso
+from .models import Habilidade, PlayerHabilidade
+from captura.models import CapturaProgresso
+from captura.serializers import CapturaProgressoSerializer
 from .serializers import (
     HabilidadeListSerializer,
     PlayerHabilidadeSerializer,
-    CapturaProgressoSerializer
 )
 
 

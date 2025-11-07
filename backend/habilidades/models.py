@@ -22,15 +22,22 @@ class Habilidade(models.Model):
     
     def aplicar(self, progresso):
         """
-        Aplica o efeito da habilidade.
-        Exemplo: aumentar chance de captura.
+        Aplica o efeito da habilidade no progresso e ajusta o karma do usuário.
         """
+        # Aplica o efeito base
         if self.nome.lower() == "ovo":
             progresso.aumentar_chance(30)
         elif self.nome.lower() == "soco":
             progresso.aumentar_chance(10)
         else:
             progresso.aumentar_chance(5)
+
+        # Aplica o karma ao usuário (se existir)
+        user = progresso.user
+        if hasattr(user, "karma"):
+            user.karma += self.karma
+            user.save()
+
         progresso.save()
         return True
 

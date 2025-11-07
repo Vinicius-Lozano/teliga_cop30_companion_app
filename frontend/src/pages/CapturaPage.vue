@@ -150,7 +150,7 @@ onMounted(async () => {
 
     // busca habilidades aplicáveis para este usuário e item
     try {
-      const resHabs = await api.get(`/api/captura/${itemId}/habilidades/`)
+      const resHabs = await api.get(`/api/habilidades/${itemId}/habilidades/`)
       habilidades.value = resHabs.data
     } catch (err) {
       console.warn('Erro ao buscar habilidades', err)
