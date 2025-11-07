@@ -158,21 +158,31 @@ class ConfirmarCapturaView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, item_id):
+        # Busca o progresso do usuário para esse item
         progresso = CapturaProgresso.objects.filter(user=request.user, item_id=item_id).first()
         if not progresso:
-            return Response({"error": "Progresso não encontrado."}, status=4.04)
+            return Response({"error": "Progresso não encontrado."}, status=404)
+        
+        # Verifica se a chance de captura atingiu 100%
         if progresso.chance < 100:
             return Response({"error": "Chance insuficiente para capturar."}, status=400)
 
+        # Marca como capturado
         progresso.capturado = True
         progresso.save()
 
-        # Adiciona à mochila principal
-        MochilaItem.objects.get_or_create(user=request.user, item_id=item_id)
+        # Adiciona à mochila principal garantindo o valor do campo obrigatório
+        mochila_item, created = MochilaItem.objects.get_or_create(
+            user=request.user,
+            item_id=item_id,
+            defaults={'foi_captura_forcada': False}  # ⚡ valor padrão para não quebrar o NOT NULL
+        )
 
-        # Reseta o progresso para uma nova captura
+        # Reseta o progresso para nova captura
         progresso.chance = 0
         progresso.capturado = False
         progresso.save()
 
-        return Response({"mensagem": "Item capturado com sucesso! Chance resetada para 0%."})
+        return Response({
+            "mensagem": "Item capturado com sucesso! Chance resetada para 0%."
+        })

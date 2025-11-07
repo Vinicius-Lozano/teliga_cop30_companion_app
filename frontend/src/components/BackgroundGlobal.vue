@@ -1,64 +1,95 @@
 <template>
-  <svg xmlns="http://www.w3.org/2000/svg"
-       viewBox="0 0 1440 560"
-       preserveAspectRatio="none">
-    <g mask="url(#SvgjsMask1022)" fill="none">
-        <rect width="1440" height="560" fill="rgba(219,254,221,1)"></rect>
-        <path d="M1119.7792397061023 141.02004066641106L1031.223584388857 110.52788322772179 1029.7631758894456 258.6074449229343z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float3"></path>
-        <path d="M631.5176929910048 85.03137324936803L653.121412954709 196.1728775485405 764.2629172538814 174.56915758483632 742.6591972901772 63.42765328566384z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float3"></path>
-        <path d="M1159.55 303.35 a114.34 114.34 0 1 0 228.68 0 a114.34 114.34 0 1 0 -228.68 0z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float2"></path>
-        <path d="M571.67 492.47 a183 183 0 1 0 366 0 a183 183 0 1 0 -366 0z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float2"></path>
-        <path d="M209.76 138.9 a155.21 155.21 0 1 0 310.42 0 a155.21 155.21 0 1 0 -310.42 0z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float2"></path>
-        <path d="M1219.5663974117845 565.6520023751864L1359.2988720564585 506.33908588187506 1299.9859555631472 366.6066112372009 1160.253480918473 425.9195277305123z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float2"></path>
-        <path d="M525.1403472048826 409.6626830435892L625.8327066579826 293.82937388020116 509.99939749459463 193.13701442710112 409.30703804149454 308.97032359048916z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float3"></path>
-        <path d="M250.65457520502028 111.15790852200088L247.94477312046257 266.4023659732645 403.1892305717262 269.11216805782226 405.8990326562839 113.8677106065586z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float2"></path>
-        <path d="M-149.26 438.28 a182.04 182.04 0 1 0 364.08 0 a182.04 182.04 0 1 0 -364.08 0z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float1"></path>
-        <path d="M1231.87 157.13 a179.96 179.96 0 1 0 359.92 0 a179.96 179.96 0 1 0 -359.92 0z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float1"></path>
-        <path d="M56.88512578693202 126.60362801697934L184.17107193670154 59.08001246807656 78.536350840468-9.519977517118747z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float3"></path>
-        <path d="M756.63 377.36 a96.31 96.31 0 1 0 192.62 0 a96.31 96.31 0 1 0 -192.62 0z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float3"></path>
-        <path d="M371.8 224.15 a171.78 171.78 0 1 0 343.56 0 a171.78 171.78 0 1 0 -343.56 0z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float3"></path>
-        <path d="M810.3590801940982 405.6672491642019L852.966739467921 501.3656187431891 975.2104641994903 389.6049450429612z" fill="rgba(46, 125, 50, 0.28)" class="triangle-float2"></path>
-    </g>
-
-    <defs>
-      <mask id="SvgjsMask1022">
-        <rect width="1440" height="560" fill="#ffffff"></rect>
-      </mask>
-    </defs>
-  </svg>
+  <div class="bg-parallax" aria-hidden="true">
+    <div class="clouds">
+      <span class="cloud" style="--t:12%; --speed:60s;  --scale:1.05; --delay:-30s;"></span>
+      <span class="cloud" style="--t:22%; --speed:80s;  --scale:0.95; --delay:-10s;"></span>
+      <span class="cloud" style="--t:33%; --speed:70s;  --scale:1.00; --delay:-50s;"></span>
+      <span class="cloud" style="--t:18%; --speed:90s;  --scale:1.10; --delay:-70s;"></span>
+      <span class="cloud" style="--t:28%; --speed:110s; --scale:1.18; --delay:-90s;"></span>
+      <span class="cloud" style="--t:8%;  --speed:75s;  --scale:0.85; --delay:-20s;"></span>
+    </div>
+    <div class="mountains far"></div>
+    <div class="mountains near"></div>
+  </div>
 </template>
 
-<style scoped>
-svg {
-  position: fixed;  
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
+<script setup>
+defineOptions({ name: 'BackgroundGlobal' })
+</script>
+
+<style>
+:root{
+  --green-700:#2e7d32; --green-600:#43a047; --green-500:#66bb6a;
+  --sky-400:#53a7ff; --sky-300:#6fd0ff;
+  --bg:linear-gradient(180deg,var(--sky-400) 0%,var(--sky-300) 45%,#eafff0 100%);
+  --ink:#0a1b0d;
+}
+
+.bg-parallax{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
+  background: var(--bg);
+  overflow: hidden;
 }
 
-/* ANIMAÇÕES */
-@keyframes float1 {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(-10px, 0); }
-  100% { transform: translate(0, 0); }
+.clouds{ position:absolute; left:0; right:0; top:0; height:55vh; }
+.cloud{
+  position:absolute; left:-30vw; top:var(--t,20%);
+  width:240px; height:82px; border-radius:50px;
+  background: rgba(255,255,255,.92);
+  box-shadow:
+    -60px 10px 0 10px rgba(255,255,255,.92),
+    -20px -6px 0  8px rgba(255,255,255,.92),
+     40px  0px 0 10px rgba(255,255,255,.92),
+     80px 10px 0  8px rgba(255,255,255,.92);
+  filter: blur(0.5px);
+  opacity:.78;
+  transform: translateX(-30vw) scale(var(--scale,1));
+  animation: cloud-drift var(--speed,80s) linear infinite;
+  animation-delay: var(--delay,-40s);
+}
+@keyframes cloud-drift{
+  0%   { transform: translateX(-30vw) scale(var(--scale,1)); }
+  100% { transform: translateX(130vw) scale(var(--scale,1)); }
 }
 
-@keyframes float2 {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(-5px, -5px); }
-  100% { transform: translate(0, 0); }
+.mountains{
+  position:absolute; left:0; right:0; bottom:0;
+  pointer-events:none; will-change: background-position;
 }
 
-@keyframes float3 {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(0, -10px); }
-  100% { transform: translate(0, 0); }
+.mountains.far{
+  height:26vh; opacity:.96;
+  background-image:
+    linear-gradient(to top, rgba(255,255,255,.03), rgba(255,255,255,0) 45%),
+    radial-gradient(80px 80px at 40px 100%,  #0b5a39 79px, transparent 80px),
+    radial-gradient(68px 68px at 120px 100%, #0b5a39 67px, transparent 68px);
+  background-size: 100% 100%, 160px 100%, 160px 100%;
+  background-repeat: no-repeat, repeat-x, repeat-x;
+  background-position: 0 0, 0 100%, 0 100%;
+  animation: forest-far 70s linear infinite;
+  filter: saturate(.95);
 }
 
-.triangle-float1 { animation: float1 5s infinite; }
-.triangle-float2 { animation: float2 4s infinite; }
-.triangle-float3 { animation: float3 6s infinite; }
+.mountains.near{
+  height:23vh; bottom:-1vh; opacity:1;
+  background-image:
+    linear-gradient(to top, rgba(255,255,255,.06), rgba(255,255,255,0) 45%),
+    radial-gradient(100px 100px at 60px 100%,  #0a6e46 99px, transparent 100px),
+    radial-gradient(90px  90px  at 160px 100%, #0a6e46 89px, transparent 90px);
+  background-size: 100% 100%, 200px 100%, 200px 100%;
+  background-repeat: no-repeat, repeat-x, repeat-x;
+  background-position: 0 0, 0 100%, 0 100%;
+  animation: forest-near 38s linear infinite;
+  filter: drop-shadow(0 -6px 18px rgba(0,0,0,.12));
+}
+
+@keyframes forest-far  { 0% {background-position:0 0, 0 100%, 0 100%} 100% {background-position:0 0, -160px 100%, -160px 100%} }
+@keyframes forest-near { 0% {background-position:0 0, 0 100%, 0 100%} 100% {background-position:0 0, -200px 100%, -200px 100%} }
+
+@media (prefers-reduced-motion: reduce){
+  .cloud, .mountains.far, .mountains.near { animation: none !important; }
+}
 </style>

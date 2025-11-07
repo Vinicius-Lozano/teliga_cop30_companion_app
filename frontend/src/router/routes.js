@@ -3,12 +3,13 @@ const routes = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: '', name: 'mapa', component: () => import('src/pages/MapaPage.vue') },
+      { path: 'mapa', name: 'mapa', component: () => import('src/pages/MapaPage.vue') },
+      { path: '', name: 'landingpage', component: () => import('pages/landingpage.vue') }, // Criação da Rota "landingpage" - Erick Erlan
       { path: 'login/', component: () => import('pages/LoginPage.vue') },
       { path: 'register', component: () => import('pages/Register.vue') },
       { path: 'details/:id', component: () => import('pages/EventoDetails.vue'), props: true },
 
-      
+
       { path: 'item/:id', name:'ItemDetalhes', component: () => import('pages/ItemDetails.vue'), props: true },
       { path: 'item/:id/captura', name: 'PaginaDeCaptura', component: () => import('pages/CapturaPage.vue')},
       { path: 'mochila', component: () => import('src/pages/MochilaPage.vue')},
@@ -22,7 +23,7 @@ const routes = [
       {
         path: 'profile',
         component: () => import('pages/ProfilePage.vue'),
-        meta: { requiresAuth: true } 
+        meta: { requiresAuth: true }
       }
     ]
   },
