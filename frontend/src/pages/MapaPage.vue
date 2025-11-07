@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-md green-bg">
+  <q-page class="q-pa-md green-bg map-page-container">
     <div class="q-pa-md flex flex-center">
       <q-card class="main-card">
         <q-card-section class="banner text-center">
@@ -61,7 +61,6 @@
               </l-map>
             </q-no-ssr>
 
-            <!-- BOTÃO AJUSTADO -->
             <q-btn 
               square
               size="lg"
@@ -79,23 +78,17 @@
                 {{ meusEventos.length }}
               </q-badge>
             </q-btn>
-            <!-- FIM DO BOTÃO -->
-
-          </div>
+            </div>
         </q-card-section>
       </q-card>
     </div>
 
-    <q-drawer
+    <q-dialog
       v-model="eventosDrawerAberto"
-      side="right"
-      overlay
-      bordered
-      :width="350"
+      position="right"
     >
-      <q-scroll-area class="fit">
-        <div class="q-pa-md">
-
+      <q-card style="height: 100%; width: 350px; max-width: 90vw; display: flex; flex-direction: column;">
+        <q-scroll-area class="fit q-pa-md">
           <div class="row items-center justify-between q-mb-md">
             <div class="text-h6">Meus Eventos Salvos</div>
             <q-btn 
@@ -150,16 +143,15 @@
             </q-card-actions>
           </q-card>
           
-        </div>
-      </q-scroll-area>
-    </q-drawer>
+        </q-scroll-area>
+      </q-card>
+    </q-dialog>
 
   </q-page>
 </template>
 
 <script setup>
 defineOptions({ name: 'MapaPage' })
-
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
@@ -167,35 +159,28 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { api } from 'boot/axios'
 import { useQuasar } from 'quasar'
-
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl })
-
 const router = useRouter()
 const $q = useQuasar()
 const isMounted = ref(false)
 const mapRef = ref(null)
 const mapCenter = ref([-1.4558, -48.4902])
 const usuarioPos = ref(null)
-
 const eventosFixos = ref([])
 const itensAleatorios = ref([])
-
 const eventosDrawerAberto = ref(false)
 const meusEventos = ref([])
-
 const usuarioIcon = L.icon({
   iconUrl: '/icons/usuario.png',
   iconSize: [40, 40],
   iconAnchor: [20, 40]
 })
-
 const eventosFixosValidos = computed(() => eventosFixos.value.filter(e => e.latitude != null && e.longitude != null))
 const itensAleatoriosValidos = computed(() => itensAleatorios.value.filter(i => i.latitude != null && i.longitude != null))
-
 function getIcon(tipo) {
   const largura = 40;
   const altura = 40;
@@ -206,18 +191,15 @@ function getIcon(tipo) {
   if (tipo === 'POC') url = '/icons/potion.svg';
   return L.icon({ iconUrl: url, iconSize: [largura, altura], iconAnchor: anchor });
 }
-
 function irParaDetalhesEvento(id) {
   eventosDrawerAberto.value = false
   router.push(`/details/${id}`)
 }
-
 async function coletarPocao(pocao) {
   if (!pocao || !pocao.id) {
     $q.notify({ message: 'Poção inválida.', color: 'negative', position: 'top' })
     return
   }
-
   try {
     await api.post('/api/capturas/pocoes/', { pocao_id: pocao.id })
     itensAleatorios.value = itensAleatorios.value.filter(
@@ -254,12 +236,10 @@ async function coletarPocao(pocao) {
     }
   }
 }
-
 function handleItemClick(item) {
   if (item.tipo === 'POC') coletarPocao(item);
   else router.push(`/item/${item.id}?lat=${item.latitude}&lon=${item.longitude}`);
 }
-
 async function obterPosicaoUsuario() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(
@@ -272,7 +252,6 @@ async function obterPosicaoUsuario() {
     (err) => console.error('Erro ao obter localização:', err)
   )
 }
-
 async function carregarItensProximos() {
   if (!usuarioPos.value) return;
   try {
@@ -286,7 +265,6 @@ async function carregarItensProximos() {
     console.error('Erro ao carregar itens próximos:', err)
   }
 }
-
 async function carregarEventosFixos() {
   try {
     const response = await api.get('/api/events/')
@@ -295,7 +273,6 @@ async function carregarEventosFixos() {
     console.error('Erro ao carregar eventos fixos:', err)
   }
 }
-
 async function carregarMeusEventos() {
   try {
     const response = await api.get('/api/capturas/eventos/')
@@ -304,7 +281,6 @@ async function carregarMeusEventos() {
     console.error('Erro ao carregar meus eventos:', err)
   }
 }
-
 function formatarData(dataISO) {
   if (!dataISO) return '';
   const dataCorrigida = dataISO + 'T12:00:00Z';
@@ -314,7 +290,6 @@ function formatarData(dataISO) {
     year: 'numeric'
   });
 }
-
 function getStatusEvento(dataISO) {
   if (!dataISO) return { text: 'Sem data', color: 'grey' };
   const hoje = new Date();
@@ -326,7 +301,6 @@ function getStatusEvento(dataISO) {
     return { text: 'Próximo', color: 'positive' };
   }
 }
-
 onMounted(async () => {
   isMounted.value = true
   obterPosicaoUsuario()
@@ -366,7 +340,6 @@ onMounted(async () => {
   margin: 0;
 }
 
-/* --- BOTÃO "MEUS EVENTOS" --- */
 .botao-eventos {
   position: absolute;
   top: 50%;
@@ -382,7 +355,6 @@ onMounted(async () => {
   justify-content: center;
 }
 
-/* POPUPS DO MAPA */
 .leaflet-popup-content-wrapper {
   background: white;
   color: #333;
