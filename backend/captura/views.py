@@ -1,23 +1,22 @@
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from habilidades.models import Habilidade
+import random
+from captura.models import Captura, CapturaProgresso, MochilaItem, MochilaEvento, MochilaPocao, ConversaQuestoes
 from drf_spectacular.utils import extend_schema
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
-
-from .models import (
-    MochilaItem, MochilaEvento, MochilaPocao,
-    ConversaQuestoes, CapturaProgresso
-)
+from item.models import Item
 from .serializers import (
     MochilaItemSerializer, MochilaEventoSerializer, MochilaPocaoSerializer,
-    ConversaQuestoesSerializer, RespostaSerializer, CapturaProgressoSerializer
+    ConversaQuestoesSerializer, RespostaSerializer
 )
-from item.models import Item
 
 
 # ===========================
-# 🧳 MOCHILA
+#  MOCHILAS
 # ===========================
 
 class MochilaItemListCreateView(generics.ListCreateAPIView):
@@ -31,8 +30,8 @@ class MochilaItemListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         item = serializer.validated_data['item']
-        captura, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
-        out = self.get_serializer(captura)
+        mochila, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
+        out = self.get_serializer(mochila)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -47,8 +46,8 @@ class MochilaEventoListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         evento = serializer.validated_data['evento']
-        captura, created = MochilaEvento.objects.get_or_create(user=request.user, evento=evento)
-        out = self.get_serializer(captura)
+        mochila, created = MochilaEvento.objects.get_or_create(user=request.user, evento=evento)
+        out = self.get_serializer(mochila)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -66,19 +65,14 @@ class MochilaPocaoListCreateView(generics.ListCreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         item = get_object_or_404(Item, pk=pocao_id)
-
-        # Cria também na mochila principal (para aparecer na UI)
         mochila_item, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
-
-        # Mantém registro separado (opcional, para rastrear poções)
         MochilaPocao.objects.get_or_create(user=request.user, item=item)
-
         out = MochilaItemSerializer(mochila_item)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 # ===========================
-# ❓ QUESTÕES
+#  QUESTÕES
 # ===========================
 
 class QuestaoView(views.APIView):
@@ -95,10 +89,8 @@ class QuestaoView(views.APIView):
         questao = get_object_or_404(ConversaQuestoes, pk=pk)
         serializer = RespostaSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         resposta = serializer.validated_data['resposta']
         acertou = questao.checar_resposta(resposta)
-
         return Response({
             "id": questao.id,
             "pergunta": questao.pergunta,
@@ -130,27 +122,65 @@ class QuestaoPorItemView(views.APIView):
 
 
 # ===========================
-# 🧪 CAPTURA
+#  CAPTURA MODULAR
 # ===========================
 
 @method_decorator(csrf_exempt, name='dispatch')
-class CapturaView(views.APIView):
+class CapturaView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, item_id):
-        progresso, _ = CapturaProgresso.objects.get_or_create(user=request.user, item_id=item_id)
-        serializer = CapturaProgressoSerializer(progresso)
-        return Response(serializer.data)
+        """Retorna o progresso atual do jogador com relação ao item."""
+        item = get_object_or_404(Item, id=item_id)
+
+        progresso, _ = CapturaProgresso.objects.get_or_create(
+            user=request.user,
+            item=item,
+            defaults={"chance": 0, "capturado": False}
+        )
+
+        return Response({
+            "item_id": item.id,
+            "chance": progresso.chance,
+            "capturado": progresso.capturado
+        })
 
     def post(self, request, item_id):
-        acao = request.data.get('acao')
-        valores = {'atacar': 20, 'conversar': 10, 'investigar': 15}
-        if acao not in valores:
-            return Response({"error": "Ação inválida."}, status=status.HTTP_400_BAD_REQUEST)
+        """Aplica uma habilidade do jogador ao item durante a captura."""
+        habilidade_id = request.data.get("habilidade_id")
+        if not habilidade_id:
+            return Response({"error": "Habilidade não informada."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        progresso, _ = CapturaProgresso.objects.get_or_create(user=request.user, item_id=item_id)
-        nova_chance = progresso.aumentar_chance(valores[acao])
-        return Response({"chance": nova_chance, "acao": acao})
+        item = get_object_or_404(Item, id=item_id)
+        habilidade = get_object_or_404(Habilidade, id=habilidade_id)
+        progresso, _ = CapturaProgresso.objects.get_or_create(user=request.user, item=item)
+
+        # Valida se o jogador possui essa habilidade e se ainda pode usá-la
+        from habilidades.models import PlayerHabilidade
+        player_hab = PlayerHabilidade.objects.filter(user=request.user, habilidade=habilidade).first()
+        if not player_hab:
+            return Response({"error": "Você não possui essa habilidade."}, status=400)
+        if not player_hab.pode_usar():
+            return Response({"error": "Sem usos restantes dessa habilidade."}, status=400)
+
+        # Aplica o efeito da habilidade
+        habilidade.aplicar(progresso)
+
+        # Registra o uso da habilidade
+        player_hab.registrar_uso()
+
+        progresso.save()
+        return Response({
+            "success": True,
+            "chance": progresso.chance,
+            "habilidade": {
+                "id": habilidade.id,
+                "nome": habilidade.nome,
+                "quantidade": player_hab.quantidade,
+            },
+            "mensagem": f"{habilidade.nome} usada com sucesso! Chance atual: {progresso.chance}%"
+        }, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -158,31 +188,24 @@ class ConfirmarCapturaView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, item_id):
-        # Busca o progresso do usuário para esse item
         progresso = CapturaProgresso.objects.filter(user=request.user, item_id=item_id).first()
         if not progresso:
             return Response({"error": "Progresso não encontrado."}, status=404)
         
-        # Verifica se a chance de captura atingiu 100%
         if progresso.chance < 100:
             return Response({"error": "Chance insuficiente para capturar."}, status=400)
 
-        # Marca como capturado
         progresso.capturado = True
         progresso.save()
 
-        # Adiciona à mochila principal garantindo o valor do campo obrigatório
         mochila_item, created = MochilaItem.objects.get_or_create(
             user=request.user,
             item_id=item_id,
-            defaults={'foi_captura_forcada': False}  # ⚡ valor padrão para não quebrar o NOT NULL
+            defaults={'foi_captura_forcada': False}
         )
 
-        # Reseta o progresso para nova captura
         progresso.chance = 0
         progresso.capturado = False
         progresso.save()
 
-        return Response({
-            "mensagem": "Item capturado com sucesso! Chance resetada para 0%."
-        })
+        return Response({"mensagem": "Item capturado com sucesso! Chance resetada para 0%."})

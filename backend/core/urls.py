@@ -36,11 +36,11 @@ urlpatterns = [
 
     # APPS locais
     path('api/', include('users.urls')),
-    # CORRIGIDO: Define um prefixo claro e padronizado para as rotas de eventos
     path('api/events/', include('events.urls')),
     path('api/', include('item.urls')),
     path('api/', include('mapaItens.urls')),
     path('api/', include('captura.urls')),
+    path('api/habilidades/', include('habilidades.urls')),
 
     # teste rota
     path('api/teste_rota_back/', teste_rota, name='teste_rota_back'),

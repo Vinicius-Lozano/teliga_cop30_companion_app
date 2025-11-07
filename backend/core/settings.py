@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'item',
     'mapaItens',
     'captura',
+    'habilidades',
 ]
 
 MIDDLEWARE = [
