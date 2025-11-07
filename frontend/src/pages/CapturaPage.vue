@@ -13,19 +13,33 @@
         </div>
 
         <q-card-section class="col-5 actions-col column" style="height: 100%; align-items: flex-start;">
-            <div class="row items-center q-mb-md">
-              <q-icon name="backpack" color="green-8" size="28px" class="q-mr-sm" />
-              <span class="text-h5" style="color:#166534; font-weight: 700;">Capturar</span>
-            </div>
+          <div class="row items-center q-mb-md">
+            <q-icon name="backpack" color="green-8" size="28px" class="q-mr-sm" />
+            <span class="text-h5" style="color:#166534; font-weight: 700;">Capturar</span>
+          </div>
 
-            <div style="flex-grow:1;"></div>
+          <div style="flex-grow:1;"></div>
 
-            <div class="column full-width">
-              <q-btn label="Conversar" color="green" icon="chat" @click="abrirConversa" class="full-width q-mb-sm" />
-              <q-btn label="Atacar" color="red" icon="bolt" @click="atacar" class="full-width q-mb-sm" />
-              <q-btn label="Ovo" color="orange" icon="egg" @click="usarOvo" class="full-width" />
-            </div>
-          </q-card-section>
+          <div class="column full-width">
+            <q-btn
+              v-for="habilidade in habilidades"
+              :key="habilidade.id"
+              :label="habilidade.nome"
+              color="primary"
+              :disable="habilidade.quantidade === 0"
+              class="full-width q-mb-sm"
+              @click="usarHabilidade(habilidade)"
+            >
+              <template v-slot:append>
+                <span v-if="habilidade.quantidade !== null" class="text-subtitle2 q-ml-sm">
+                  x{{ habilidade.quantidade }}
+                </span>
+              </template>
+            </q-btn>
+
+            <q-btn label="Conversar" color="green" icon="chat" @click="abrirConversa" class="full-width q-mb-sm" />
+          </div>
+        </q-card-section>
       </q-card-section>
 
       <q-card-section class="q-mt-md">
@@ -102,10 +116,12 @@ const router = useRouter()
 const item = ref(null)
 const chance = ref(0)
 
+// lista de habilidades (vinda do backend)
+const habilidades = ref([])
+
 // Animações
 const mostrarBonk = ref(false)
 const mostrarOvo = ref(false)
-const somBonk = ref(null)
 
 // Diálogo de perguntas
 const mostrarDialogo = ref(false)
@@ -114,55 +130,67 @@ const resultado = ref(null)
 const opcoes = ref({})
 
 onMounted(async () => {
-  // Pré-carrega som
-  somBonk.value = new Audio('/sounds/bonk.mp3')
-  somBonk.value.volume = 0.8
-
-  // Carrega item e chance
   const itemId = route.params.id
   if (itemId) {
+    // busca item e progresso
     const [resItem, resCaptura] = await Promise.all([
       api.get(`/api/item/${itemId}/`),
       api.get(`/api/captura/${itemId}/`)
     ])
     item.value = resItem.data
     chance.value = resCaptura.data.chance
+
+    // busca habilidades aplicáveis para este usuário e item
+    try {
+      const resHabs = await api.get(`/api/habilidades/${itemId}/habilidades/`)
+      habilidades.value = resHabs.data
+    } catch (err) {
+      console.warn('Erro ao buscar habilidades', err)
+      habilidades.value = []
+    }
   }
 })
 
-async function executarAcao(acao) {
+/** Executa habilidade (chama backend) */
+async function executarAcao(habilidade_id) {
   try {
     const itemId = route.params.id
-    const res = await api.post(`/api/captura/${itemId}/`, { acao })
-    chance.value = res.data.chance
-  } catch {
-    $q.notify({ type: 'negative', message: 'Erro ao executar ação' })
-  }
-}
+    const res = await api.post(`/api/captura/${itemId}/`, { habilidade_id })
+    if (res.data.chance !== undefined) chance.value = res.data.chance
 
-// Ataque com som e animação
-async function atacar() {
-  try {
-    somBonk.value.play().catch(err => console.warn('Erro ao tocar som:', err))
-    mostrarBonk.value = true
-    setTimeout(() => (mostrarBonk.value = false), 800)
-    await executarAcao('atacar')
+    if (res.data.habilidade) {
+      const h = res.data.habilidade
+      const idx = habilidades.value.findIndex(x => x.id === h.id)
+      if (idx !== -1) habilidades.value[idx] = { ...habilidades.value[idx], ...h }
+    }
   } catch (err) {
-    console.error(err)
+    const msg = err?.response?.data?.detail || 'Erro ao executar ação'
+    $q.notify({ type: 'negative', message: msg })
   }
 }
 
-// Usar ovo com animação e som
-async function usarOvo() {
-  try {
-    mostrarOvo.value = true
-    setTimeout(() => (mostrarOvo.value = false), 1000)
-    await executarAcao('atacar') 
-  } catch (err) {
-    console.error(err)
+/** Usa habilidade (Versão da MAIN) */
+async function usarHabilidade(h) {
+  if (h.quantidade === 0) {
+    $q.notify({ type: 'negative', message: 'Sem usos restantes dessa habilidade.' })
+    return
   }
+
+  // tocar som se existir
+  if (h.som) {
+    const a = new Audio(h.som)
+    a.play().catch(()=>{})
+  }
+
+  // animação customizada (se desejar)
+  if (h.animacao) {
+    // Exemplo: if (h.nome.toLowerCase().includes('ovo')) { mostrarOvo.value = true; setTimeout(()=>mostrarOvo.value=false,1000) }
+  }
+
+  await executarAcao(h.id)
 }
 
+/** Capturar (Versão do HEAD, com sua notificação melhorada) */
 async function capturar() {
   // $q.loading.show({ message: 'Salvando na mochila...' }) 
 
@@ -171,7 +199,7 @@ async function capturar() {
     await api.post(`/api/captura/${itemId}/confirmar/`)
     chance.value = 100
 
-    // Notificação de sucesso
+    // Notificação de sucesso (SUA VERSÃO)
     $q.notify({
         type: 'positive',
         color: 'positive',
@@ -190,7 +218,7 @@ async function capturar() {
   }
 }
 
-// Abrir diálogo de conversa
+/** Conversar */
 async function abrirConversa() {
   try {
     const itemId = route.params.id
@@ -209,12 +237,13 @@ async function abrirConversa() {
   }
 }
 
-// Responder pergunta
+/** Responder pergunta (Versão do HEAD, com sua lógica extra) */
 async function responder(letra) {
   try {
     const res = await api.post(`/api/questao/${questao.value.id}/`, { resposta: letra })
     resultado.value = res.data
 
+    // Sua lógica de executar ação ao acertar (SUA VERSÃO)
     if (res.data.acertou) {
       await executarAcao('conversar')
     }
@@ -230,11 +259,7 @@ function fecharDialogo() {
 }
 </script>
 
-
-
 <style scoped>
-
-/* CARD PRINCIPAL */
 .main-card {
   max-width: 700px;
   margin: auto;
@@ -245,19 +270,19 @@ function fecharDialogo() {
   flex-direction: column;
 }
 
-/* IMAGEM */
 .card-image { position: relative; max-height: 400px; }
 .main-img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
 
-/* ANIMAÇÕES */
-.bonk-animacao, .ovo-animacao { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:150px; pointer-events:none; }
+.bonk-animacao, .ovo-animacao {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:150px; pointer-events:none;
+}
 .fade-enter-active,.fade-leave-active { transition: opacity .5s; }
 .fade-enter-from,.fade-leave-to { opacity:0; }
 
-/* BOTÕES AGRUPADOS */
 .actions-col { display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center; }
 
-/* BARRA DE PROGRESSO */
 .progress-bar { position:relative; margin-top:12px; height:40px; }
 .progress-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; color:rgb(119, 119, 119); }
 .full-width { width:100%; }

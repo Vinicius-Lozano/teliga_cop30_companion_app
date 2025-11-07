@@ -2,11 +2,18 @@ from django.conf import settings
 from django.db import models
 from item.models import Item
 from events.models import Evento
+from habilidades.models import Habilidade
+
+
+# ===========================
+#  MOCHILAS
+# ===========================
 
 class MochilaItem(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mochila_itens')
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='capturado_por')
     captured_at = models.DateTimeField(auto_now_add=True)
+    foi_captura_forcada = models.BooleanField(default=False)
 
     # NOVO CAMPO
     foi_captura_forcada = models.BooleanField(default=False, help_text="Indica se a captura usou 'atacar'")
@@ -46,6 +53,23 @@ class MochilaPocao(models.Model):
         return f'{self.user} -> {self.item} (poção)'
 
 
+# ===========================
+#  CAPTURA E PROGRESSO
+# ===========================
+
+class Captura(models.Model):
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    habilidade_usada = models.ForeignKey(Habilidade, on_delete=models.SET_NULL, null=True, blank=True)
+    data = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-data']
+
+    def __str__(self):
+        return f"{self.usuario} capturou {self.item} usando {self.habilidade_usada or 'desconhecida'}"
+
+
 class CapturaProgresso(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
@@ -65,6 +89,16 @@ class CapturaProgresso(models.Model):
         self.save()
         return self.chance
 
+    def mudar_chance(self, valor):
+        """Modifica a chance sem ultrapassar 0–1."""
+        self.chance = max(0, min(1, self.chance + valor))
+        self.save()
+        return self.chance
+
+
+# ===========================
+#  QUESTÕES
+# ===========================
 
 class ConversaQuestoes(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='conversa_questoes')

@@ -9,7 +9,7 @@
         </q-toolbar-title>
 
         <div v-if="!$q.screen.lt.md" class="row items-center q-gutter-sm">
-          <q-btn flat dense to="/" label="Mapa" icon="map" class="nav-link" />
+          <q-btn flat dense :to="{ name: 'mapa' }" label="Mapa" icon="map" class="nav-link" />
 
           <template v-if="isAuthenticated">
             <q-btn flat dense to="/mochila" label="Mochila" icon="inventory" class="nav-link" />
@@ -44,7 +44,7 @@
 
     <q-drawer v-model="drawerOpen" side="right" overlay bordered class="bg-white text-dark">
       <q-list>
-        <q-item clickable v-ripple to="/" @click="drawerOpen = false">
+        <q-item clickable v-ripple to="mapa" @click="drawerOpen = false">
           <q-item-section avatar><q-icon name="map" /></q-item-section>
           <q-item-section>Mapa</q-item-section>
         </q-item>

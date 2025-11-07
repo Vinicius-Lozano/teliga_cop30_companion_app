@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -34,26 +35,21 @@ class UsuarioManager(BaseUserManager):
 
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
+    
     class Genero(models.TextChoices):
         MASCULINO = "M", _("Masculino")
         FEMININO = "F", _("Feminino")
         OUTRO = "O", _("Outro")
 
     username = models.CharField(_("username"), max_length=50, unique=True)
-    email = models.EmailField(
-        _("endereço de email"), max_length=254, unique=True
-    )
-    genero = models.CharField(
-        _("gênero"), max_length=1, choices=Genero.choices, blank=True
-    )
+    email = models.EmailField(_("endereço de email"), max_length=254, unique=True)
+    genero = models.CharField(_("gênero"), max_length=1, choices=Genero.choices, blank=True)
     data_nas = models.DateField(_("data de nascimento"), null=True, blank=True)
-    telefone = models.CharField(
-        _("telefone"), max_length=15, null=True, blank=True
-    )
+    telefone = models.CharField(_("telefone"), max_length=15, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(_("data de cadastro"), default=timezone.now)
-
+    karma = models.PositiveSmallIntegerField(_("karma"), default=100, validators=[MaxValueValidator(200)])
 
     objects = UsuarioManager()
 

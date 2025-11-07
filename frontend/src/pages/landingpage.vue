@@ -15,76 +15,17 @@
 
     <section class="hero">
       <div class="hero-inner">
-        <div class="phone-col">
-          <div class="phone-frame">
-            <div class="notch"></div>
-
-            <q-no-ssr>
-              <l-map
-                v-if="isMounted"
-                ref="mapRef"
-                class="map-hero"
-                :zoom="13"
-                :center="mapCenter"
-                :zoomControl="false"
-                :scrollWheelZoom="false"
-                :doubleClickZoom="false"
-                :dragging="true"
-              >
-                <l-tile-layer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                />
-
-                <l-marker v-if="usuarioPos" :lat-lng="usuarioPos" :icon="usuarioIcon">
-                  <l-popup>Você está aqui</l-popup>
-                </l-marker>
-
-                <l-marker
-                  v-for="evento in eventosFixosValidos"
-                  :key="`evento-${evento.id}`"
-                  :lat-lng="[evento.latitude, evento.longitude]"
-                  @click="irParaDetalhesEvento(evento.id)"
-                >
-                  <l-popup>{{ evento.titulo }}</l-popup>
-                </l-marker>
-
-                <l-marker
-                  v-for="item in itensAleatoriosValidos"
-                  :key="`item-${item.id}-${item.latitude}`"
-                  :lat-lng="[item.latitude, item.longitude]"
-                  :icon="getIcon(item.tipo)"
-                  @click="handleItemClick(item)"
-                >
-                  <l-popup>
-                    <b>{{ item.nome }}</b>
-                    <div v-if="item.tipo === 'POC'">
-                      Bônus de Captura: +{{ item.bonus_captura }}%
-                      <br /><small>Clique no item para coletar</small>
-                    </div>
-                  </l-popup>
-                </l-marker>
-              </l-map>
-            </q-no-ssr>
-
-            <div class="play-pill" @click="router.push(PLAY_ROUTE)">JOGAR</div>
-          </div>
+        <div class="hero-illustration">
+          <img src="/illustrations/TeLiga_logo.svg" alt="TeLiga_logo" class="hero-svg" />
         </div>
 
         <div class="copy-col">
-          <div class="brand-badge">
-            <span class="pin">📍</span><strong>TE LIGA!</strong>
-          </div>
 
           <h1 class="title">
-            Descubra o<br />
-            <span>Turismo de Forma Gamificada</span>
+            Descubra<br />
+            <span>O Turismo Gamificado</span>
           </h1>
-
-          <p class="subtitle">
-            Lorem ipsum dolor sit amet. Eum consectetur minima et expedita nisi non pariatur maxime et autem minus rem atque iste et ducimus voluptas? Aut quia aliquam qui repudiandae ducimus et dignissimos nobis ad sapiente dolores ut consequatur quis aut optio amet id fuga nobis. Vel dolor illo et omnis voluptatum qui Quis nihil sed possimus sint id quas officiis eos vitae accusantium. Et dolorem nihil eum commodi neque quo vero consequatur est nihil iure.
-          </p>
-
+          
           <div class="cta-row">
             <q-btn class="cta primary" unelevated rounded size="lg" @click="scrollTo('#sobre')">
               Conheça o Projeto
@@ -103,7 +44,8 @@
         <div class="about-text">
           <h2>Sobre o Projeto</h2>
           <p>
-            Lorem ipsum dolor sit amet. Eum consectetur minima et expedita nisi non pariatur maxime et autem minus rem atque iste et ducimus voluptas? Aut quia aliquam qui repudiandae ducimus et dignissimos nobis ad sapiente dolores ut consequatur quis aut optio amet id fuga nobis. Vel dolor illo et omnis voluptatum qui Quis nihil sed possimus sint id quas officiis eos vitae accusantium. Et dolorem nihil eum commodi neque quo vero consequatur est nihil iure.
+            O app visa construir uma melhor experiência para turistas e interessados durante o evento da COP30, servindo como um companion com várias funções e interações com a cidade, o evento e a cultura local.animais
+            Através de sistemas integrados como uma lista estilo Pokédex com peculiaridades da região (, plantas e pautas da COP30)
           </p>
         </div>
       </div>
@@ -135,25 +77,14 @@
 <script setup>
 defineOptions({ name: 'LandingTeLiga' })
 
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import { api } from 'boot/axios'
-import { useQuasar } from 'quasar'
 
 const CTA_ROUTE = '/register'
-const PLAY_ROUTE = '/'
 
-import iconUrl from 'leaflet/dist/images/marker-icon.png'
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl })
 
 const router = useRouter()
-const $q = useQuasar()
 const isMounted = ref(false)
 const mapRef = ref(null)
 const mapCenter = ref([-1.4558, -48.4902])
@@ -162,43 +93,6 @@ const usuarioPos = ref(null)
 const eventosFixos = ref([])
 const itensAleatorios = ref([])
 
-function getIcon (tipo) {
-  const largura = 40, altura = 40
-  const anchor = [largura / 2, altura]
-  let url = '/icons/item_padrao.png'
-  if (tipo === 'ANI') url = '/icons/animal.png'
-  if (tipo === 'PLA') url = '/icons/planta.png'
-  if (tipo === 'POC') url = '/icons/potion.svg'
-  return L.icon({ iconUrl: url, iconSize: [largura, altura], iconAnchor: anchor })
-}
-
-const usuarioIcon = L.icon({ iconUrl: '/icons/usuario.png', iconSize: [40, 40], iconAnchor: [20, 40] })
-
-function irParaDetalhesEvento (id) { router.push(`/details/${id}`) }
-
-async function coletarPocao (pocao) {
-  if (!pocao?.id) return $q.notify({ message: 'Poção inválida.', color: 'negative', position: 'top' })
-  try {
-    await api.post('/api/capturas/pocoes/', { pocao_id: pocao.id })
-    itensAleatorios.value = itensAleatorios.value.filter(
-      (item) => !(item.id === pocao.id && item.latitude === pocao.latitude)
-    )
-    $q.notify({ message: `${pocao.nome} coletada e guardada na mochila!`, color: 'positive', icon: 'check_circle', position: 'top' })
-  } catch (err) {
-    const status = err?.response?.status
-    if (status === 400 || status === 409) $q.notify({ message: `${pocao.nome} já foi coletada.`, color: 'info', icon: 'info', position: 'top' })
-    else if (status === 401) $q.notify({ message: 'Você precisa estar logado para coletar poções.', color: 'warning', position: 'top' })
-    else { console.error('Erro ao coletar poção:', err); $q.notify({ message: 'Erro ao coletar poção. Tente novamente.', color: 'negative', position: 'top' }) }
-  }
-}
-
-function handleItemClick (item) {
-  if (item.tipo === 'POC') coletarPocao(item)
-  else router.push(`/item/${item.id}?lat=${item.latitude}&lon=${item.longitude}`)
-}
-
-const eventosFixosValidos = computed(() => eventosFixos.value.filter(e => e.latitude != null && e.longitude != null))
-const itensAleatoriosValidos = computed(() => itensAleatorios.value.filter(i => i.latitude != null && i.longitude != null))
 
 async function obterPosicaoUsuario () {
   if (!navigator.geolocation) return
@@ -339,25 +233,19 @@ onMounted(async () => {
   padding:6px 12px; border-radius:999px; box-shadow:0 4px 10px rgba(0,0,0,.06); margin-bottom:10px;
 }
 .brand-badge .pin{ font-size:18px }
-
-.phone-col{ display:flex; justify-content:center }
-.phone-frame{
-  position:relative; width:min(420px,90vw); aspect-ratio:9/19.5;
-  background:#0f1b4a; border-radius:32px;
-  box-shadow:0 18px 40px rgba(0,0,0,.25), inset 0 0 0 10px #1b2a6b;
-  padding:14px;
+.hero-illustration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.notch{ position:absolute; top:10px; left:50%; transform:translateX(-50%); width:40%; height:18px; background:#0f1b4a; border-bottom-left-radius:14px; border-bottom-right-radius:14px; }
-.map-hero{ width:100%; height:100%; border-radius:20px; overflow:hidden; filter:saturate(.9) contrast(1.02) brightness(.98); }
-
-.play-pill{
-  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
-  background:#2f8dfb; color:#fff; font-weight:800; border-radius:999px; padding:8px 20px;
-  box-shadow:0 6px 16px rgba(47,141,251,.35); letter-spacing:.5px; cursor:pointer; user-select:none;
+.hero-svg {
+  width: min(420px, 90vw);
+  max-height: 500px;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15));
 }
 
-.title{ font-size:clamp(32px,4.6vw,52px); line-height:1.1; color:#062b19; margin:6px 0 10px; }
-.title span{ color: rgb(9, 126, 38); } /* pedido */
+.title{ font-size:clamp(32px,4.6vw,52px); line-height:1.1; color:#1b2a6b; margin:6px 0 10px; font-weight: 800; }
+.title span{ color: rgb(9, 126, 38); padding-left: 1rem; display: inline; } /* pedido */
 .subtitle{ font-size:18px; color:#0b3b22; opacity:.85; margin-bottom:18px }
 .cta-row{ display:flex; gap:12px; flex-wrap:wrap }
 .copy-col :deep(.q-btn){ font-weight:800 }
@@ -374,7 +262,7 @@ onMounted(async () => {
   width:120px; height:120px; border-radius:16px; display:flex; align-items:center; justify-content:center;
   background:linear-gradient(140deg,#e7ffe8,#e7f9ff); font-size:40px;
 }
-.about-text h2{ margin:0 0 6px }
+.about-text h2{ margin:0 0 6px; font-weight: 400; color: #1b2a6b;}
 .about-text p{ margin:0; color:#285e3f }
 
 .how{ max-width:1100px; margin:0 auto; padding:20px; }
