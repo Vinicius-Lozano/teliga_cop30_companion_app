@@ -1,7 +1,7 @@
 <template>
   <q-page class="container q-pa-md">
     <div class="row justify-end q-mb-md">
-      <q-btn label="Voltar para o mapa" flat icon="arrow_back" to="/" />
+      <q-btn label="Voltar para o mapa" flat icon="arrow_back" to="/mapa" />
     </div>
 
     <div v-if="item">
@@ -56,7 +56,7 @@
       <div v-else>
         <q-icon name="error_outline" color="red" size="64px" />
         <div class="text-h6 q-mt-md">Item não encontrado</div>
-        <q-btn color="primary" label="Voltar para o mapa" class="q-mt-lg" to="/" />
+        <q-btn color="primary" label="Voltar para o mapa" class="q-mt-lg" to="/mapa" />
       </div>
     </div>
   </q-page>
@@ -88,7 +88,6 @@ onMounted(async () => {
   }
 })
 
-// *** FUNÇÃO 'coletarPlanta' ***
 async function coletarPlanta() {
   if (!item.value) return
 

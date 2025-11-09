@@ -111,19 +111,11 @@ import { useQuasar } from 'quasar'
 const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
-
-// Dados do item e chance
 const item = ref(null)
 const chance = ref(0)
-
-// lista de habilidades (vinda do backend)
 const habilidades = ref([])
-
-// Animações
 const mostrarBonk = ref(false)
 const mostrarOvo = ref(false)
-
-// Diálogo de perguntas
 const mostrarDialogo = ref(false)
 const questao = ref(null)
 const resultado = ref(null)
@@ -132,15 +124,12 @@ const opcoes = ref({})
 onMounted(async () => {
   const itemId = route.params.id
   if (itemId) {
-    // busca item e progresso
     const [resItem, resCaptura] = await Promise.all([
       api.get(`/api/item/${itemId}/`),
       api.get(`/api/captura/${itemId}/`)
     ])
     item.value = resItem.data
     chance.value = resCaptura.data.chance
-
-    // busca habilidades aplicáveis para este usuário e item
     try {
       const resHabs = await api.get(`/api/habilidades/${itemId}/habilidades/`)
       habilidades.value = resHabs.data
@@ -151,7 +140,6 @@ onMounted(async () => {
   }
 })
 
-/** Executa habilidade (chama backend) */
 async function executarAcao(habilidade_id) {
   try {
     const itemId = route.params.id
@@ -169,20 +157,17 @@ async function executarAcao(habilidade_id) {
   }
 }
 
-/** Usa habilidade (Versão da MAIN) */
 async function usarHabilidade(h) {
   if (h.quantidade === 0) {
     $q.notify({ type: 'negative', message: 'Sem usos restantes dessa habilidade.' })
     return
   }
 
-  // tocar som se existir
   if (h.som) {
     const a = new Audio(h.som)
     a.play().catch(()=>{})
   }
 
-  // animação customizada (se desejar)
   if (h.animacao) {
     // Exemplo: if (h.nome.toLowerCase().includes('ovo')) { mostrarOvo.value = true; setTimeout(()=>mostrarOvo.value=false,1000) }
   }
@@ -190,7 +175,6 @@ async function usarHabilidade(h) {
   await executarAcao(h.id)
 }
 
-/** Capturar (Versão do HEAD, com sua notificação melhorada) */
 async function capturar() {
   // $q.loading.show({ message: 'Salvando na mochila...' }) 
 
@@ -198,8 +182,6 @@ async function capturar() {
     const itemId = route.params.id
     await api.post(`/api/captura/${itemId}/confirmar/`)
     chance.value = 100
-
-    // Notificação de sucesso (SUA VERSÃO)
     $q.notify({
         type: 'positive',
         color: 'positive',
@@ -208,17 +190,15 @@ async function capturar() {
         position: 'top'
     })
 
-    // $q.loading.hide() 
     router.push({ name: 'mapa' }) 
   
   } catch(err) {
-    // $q.loading.hide() 
     console.error("Erro ao capturar:", err)
     $q.notify({ type: 'negative', message: 'Erro ao confirmar a captura' })
   }
 }
 
-/** Conversar */
+
 async function abrirConversa() {
   try {
     const itemId = route.params.id
@@ -237,13 +217,10 @@ async function abrirConversa() {
   }
 }
 
-/** Responder pergunta (Versão do HEAD, com sua lógica extra) */
 async function responder(letra) {
   try {
     const res = await api.post(`/api/questao/${questao.value.id}/`, { resposta: letra })
     resultado.value = res.data
-
-    // Sua lógica de executar ação ao acertar (SUA VERSÃO)
     if (res.data.acertou) {
       await executarAcao('conversar')
     }

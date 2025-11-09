@@ -1,7 +1,6 @@
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 from rest_framework.views import APIView
-# Import da main (necessário para o novo sistema)
 from habilidades.models import Habilidade
 import random
 from captura.models import Captura, CapturaProgresso, MochilaItem, MochilaEvento, MochilaPocao, ConversaQuestoes
@@ -15,12 +14,6 @@ from .serializers import (
     ConversaQuestoesSerializer, RespostaSerializer
 )
 
-
-# ===========================
-#  MOCHILAS (Versão do HEAD, com novas views)
-# ===========================
-
-# --- NOVAS VIEWS SEPARADAS ---
 
 class MochilaFaunaListView(generics.ListAPIView):
     """ Retorna apenas os itens do tipo 'Animal' (Fauna) da mochila """
@@ -52,20 +45,13 @@ class MochilaItensListView(generics.ListAPIView):
     serializer_class = MochilaItemSerializer
 
     def get_queryset(self):
-        # Filtra apenas por itens do tipo 'NEN' (itens comuns)
         return MochilaItem.objects.filter(
             user=self.request.user,
             item__tipo=Item.Tipo.NEN
         ).select_related('item')
 
 
-# --- VIEWS ANTIGAS (COM AJUSTES) ---
-
 class MochilaItemListCreateView(generics.ListCreateAPIView):
-    """ 
-    View original - Agora funciona como um 'adicionar genérico' 
-    (Não será mais usada para LISTAR, usaremos as views acima)
-    """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = MochilaItemSerializer
 
@@ -77,8 +63,6 @@ class MochilaItemListCreateView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         item = serializer.validated_data['item']
         
-        # O 'foi_captura_forcada' é setado pelo ConfirmarCapturaView
-        # (Mantendo a variável 'captura' do HEAD)
         captura, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
         
         out = self.get_serializer(captura)
@@ -102,12 +86,10 @@ class MochilaEventoListCreateView(generics.ListCreateAPIView):
 
 
 class MochilaPocaoListCreateView(generics.ListCreateAPIView):
-    """ Lista e cria Poções (Versão do HEAD, que está correta) """
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = MochilaPocaoSerializer # Serializer correto
+    serializer_class = MochilaPocaoSerializer 
 
     def get_queryset(self):
-        # Filtra para trazer apenas poções
         return MochilaPocao.objects.filter(
             user=self.request.user, 
             item__tipo=Item.Tipo.POC
@@ -119,22 +101,14 @@ class MochilaPocaoListCreateView(generics.ListCreateAPIView):
             return Response({"detail": "Campo 'pocao_id' ou 'item_id' é obrigatório."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Garante que o item é uma poção
         item = get_object_or_404(Item, pk=pocao_id, tipo=Item.Tipo.POC)
 
-        # Adiciona na mochila de poções
         mochila_pocao, created = MochilaPocao.objects.get_or_create(user=request.user, item=item)
 
-        # Opcional: Adiciona na mochila principal também se sua lógica depender disso
-        # MochilaItem.objects.get_or_create(user=request.user, item=item)
 
         out = self.get_serializer(mochila_pocao)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
-
-# ===========================
-#  QUESTÕES
-# ===========================
 
 class QuestaoView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -182,9 +156,6 @@ class QuestaoPorItemView(views.APIView):
         return Response(serializer.data)
 
 
-# ===========================
-#  🧪 CAPTURA MODULAR (Versão da MAIN)
-# ===========================
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CapturaView(APIView):
@@ -207,42 +178,56 @@ class CapturaView(APIView):
         })
 
     def post(self, request, item_id):
-        """Aplica uma habilidade do jogador ao item durante a captura."""
+        """Aplica uma habilidade ou ação (como conversar) ao item."""
+        
         habilidade_id = request.data.get("habilidade_id")
         if not habilidade_id:
             return Response({"error": "Habilidade não informada."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Esta é a nova lógica da MAIN, que vamos adotar
         item = get_object_or_404(Item, id=item_id)
-        habilidade = get_object_or_404(Habilidade, id=habilidade_id)
         progresso, _ = CapturaProgresso.objects.get_or_create(user=request.user, item=item)
 
-        # Valida se o jogador possui essa habilidade e se ainda pode usá-la
-        from habilidades.models import PlayerHabilidade
-        player_hab = PlayerHabilidade.objects.filter(user=request.user, habilidade=habilidade).first()
-        if not player_hab:
-            return Response({"error": "Você não possui essa habilidade."}, status=400)
-        if not player_hab.pode_usar():
-            return Response({"error": "Sem usos restantes dessa habilidade."}, status=400)
+        if habilidade_id == 'conversar':
+            progresso.chance += 20 
+            if progresso.chance > 100:
+                progresso.chance = 100
+            
+            progresso.save()
+            
+            return Response({
+                "success": True,
+                "chance": progresso.chance,
+                "mensagem": "Bônus de conversa aplicado!"
+            }, status=status.HTTP_200_OK)
 
-        # Aplica o efeito da habilidade
-        habilidade.aplicar(progresso)
+        else:
+            try:
+                habilidade = get_object_or_404(Habilidade, id=int(habilidade_id))
+            except (ValueError, Habilidade.DoesNotExist):
+                return Response({"error": f"Habilidade com ID '{habilidade_id}' não encontrada."}, status=404)
+            from habilidades.models import PlayerHabilidade
+            player_hab = PlayerHabilidade.objects.filter(user=request.user, habilidade=habilidade).first()
+            if not player_hab:
+                return Response({"error": f"Você não possui a habilidade '{habilidade.nome}'."}, status=400)
+            if not player_hab.pode_usar():
+                return Response({"error": f"Sem usos restantes da habilidade '{habilidade.nome}'."}, status=400)
 
-        # Registra o uso da habilidade
-        player_hab.registrar_uso()
+            habilidade.aplicar(progresso)
 
-        progresso.save()
-        return Response({
-            "success": True,
-            "chance": progresso.chance,
-            "habilidade": {
-                "id": habilidade.id,
-                "nome": habilidade.nome,
-                "quantidade": player_hab.quantidade,
-            },
-            "mensagem": f"{habilidade.nome} usada com sucesso! Chance atual: {progresso.chance}%"
-        }, status=status.HTTP_200_OK)
+            player_hab.registrar_uso()
+
+            progresso.save()
+            return Response({
+                "success": True,
+                "chance": progresso.chance,
+                "habilidade": {
+                    "id": habilidade.id,
+                    "nome": habilidade.nome,
+                    "quantidade": player_hab.quantidade,
+                },
+                "mensagem": f"{habilidade.nome} usada com sucesso! Chance atual: {progresso.chance}%"
+            }, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -260,18 +245,14 @@ class ConfirmarCapturaView(views.APIView):
         progresso.capturado = True
         progresso.save()
 
-        # A lógica do HEAD (foi_ataque_usado) não é mais compatível com o sistema de Habilidades
-        # Então, adotamos a lógica da MAIN, que é mais simples
         mochila_item, created = MochilaItem.objects.get_or_create(
             user=request.user,
             item_id=item_id,
-            defaults={'foi_captura_forcada': False} # Versão da MAIN
+            defaults={'foi_captura_forcada': False} 
         )
 
         progresso.chance = 0
         progresso.capturado = False
-        # A linha abaixo (do HEAD) foi removida pois progresso.foi_ataque_usado não existe mais
-        # progresso.foi_ataque_usado = False 
         progresso.save()
 
         return Response({"mensagem": "Item capturado com sucesso! Chance resetada para 0%."})
