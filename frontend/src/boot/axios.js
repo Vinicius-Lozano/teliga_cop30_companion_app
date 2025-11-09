@@ -3,7 +3,7 @@ import axios from 'axios'
 import { Notify } from 'quasar' // Importar o Quasar Notify
 
 const api = axios.create({
-  baseURL: process.env.VITE_API_URL
+  baseURL: import.meta.env.VITE_API_URL
 })
 
 
