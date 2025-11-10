@@ -1,14 +1,14 @@
 <template>
   <q-page class="profile-page">
     <div class="profile-header q-pa-md">
-      <h1 class="text-green-10 text-h4 q-mb-xs">Te liga!</h1>
+      <h1 class="text-h4 q-mb-xs">Te liga!</h1>
       <div class="row items-center cursor-pointer" @click="$router.push('/mapa')">
-        <q-icon name="arrow_back" color="green-10" size="20px" />
-        <span class="text-green-10 text-subtitle2 q-ml-xs">Voltar ao mapa</span>
+        <q-icon name="arrow_back" size="20px" />
+        <span class="text-subtitle2 q-ml-xs">Voltar ao mapa</span>
       </div>
     </div>
 
-    <div class="flex flex-center q-pa-xl">
+    <div class="flex flex-center q-pa-md q-md-pa-lg">
       
       <q-card class="profile-card">
         <h1 class="text-h5 text-green-10 text-center q-mb-lg">Perfil</h1>
@@ -172,13 +172,16 @@ async function excluirConta() {
 </script>
 
 <style scoped>
-.profile-page {
-  min-height: 100vh;
-}
-
 .profile-header {
   padding-top: 16px;
   padding-bottom: 8px;
+  position: relative; 
+  z-index: 10;     
+}
+
+.profile-page {
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .profile-header h1 {
@@ -198,8 +201,15 @@ async function excluirConta() {
   border-radius: 16px;
   background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 32px;
+  padding: 24px; 
 }
+
+@media (min-width: 600px) { 
+  .profile-card {
+    padding: 32px;
+  }
+}
+
 
 .profile-card h1 {
   color: #2e7d32 !important;
