@@ -78,7 +78,7 @@ export async function syncLocalMochilaToBackend() {
     for (const key of possibleKeys) {
       try {
         const raw = localStorage.getItem(key)
-        if (!raw) continue
+        if (!raw || raw === "undefined") continue
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed)) combined = combined.concat(parsed)
       } catch (e) {

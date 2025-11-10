@@ -159,16 +159,18 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { api } from 'boot/axios'
 import { useQuasar } from 'quasar'
+import { Geolocation } from '@capacitor/geolocation'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl })
+
 const router = useRouter()
 const $q = useQuasar()
 const isMounted = ref(false)
 const mapRef = ref(null)
-const mapCenter = ref([-1.4558, -48.4902])
+const mapCenter = ref([-1.4558, -48.4902]) 
 const usuarioPos = ref(null)
 const eventosFixos = ref([])
 const itensAleatorios = ref([])
@@ -179,8 +181,10 @@ const usuarioIcon = L.icon({
   iconSize: [40, 40],
   iconAnchor: [20, 40]
 })
+
 const eventosFixosValidos = computed(() => eventosFixos.value.filter(e => e.latitude != null && e.longitude != null))
 const itensAleatoriosValidos = computed(() => itensAleatorios.value.filter(i => i.latitude != null && i.longitude != null))
+
 function getIcon(tipo) {
   const largura = 40;
   const altura = 40;
@@ -191,10 +195,12 @@ function getIcon(tipo) {
   if (tipo === 'POC') url = '/icons/potion.svg';
   return L.icon({ iconUrl: url, iconSize: [largura, altura], iconAnchor: anchor });
 }
+
 function irParaDetalhesEvento(id) {
   eventosDrawerAberto.value = false
   router.push(`/details/${id}`)
 }
+
 async function coletarPocao(pocao) {
   if (!pocao || !pocao.id) {
     $q.notify({ message: 'Poção inválida.', color: 'negative', position: 'top' })
@@ -236,22 +242,51 @@ async function coletarPocao(pocao) {
     }
   }
 }
+
 function handleItemClick(item) {
   if (item.tipo === 'POC') coletarPocao(item);
   else router.push(`/item/${item.id}?lat=${item.latitude}&lon=${item.longitude}`);
 }
+
 async function obterPosicaoUsuario() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      usuarioPos.value = [position.coords.latitude, position.coords.longitude]
-      mapCenter.value = usuarioPos.value
-      if (mapRef.value?.mapObject) mapRef.value.mapObject.setView(usuarioPos.value, 13)
-      await carregarItensProximos()
-    },
-    (err) => console.error('Erro ao obter localização:', err)
-  )
+  try {
+    const permission = await Geolocation.checkPermissions();
+    if (permission.location !== 'granted') {
+      const request = await Geolocation.requestPermissions();
+      if (request.location !== 'granted') {
+        $q.notify({
+          message: 'A permissão de localização é essencial para o mapa.',
+          color: 'negative',
+          icon: 'location_off'
+        });
+        return; 
+      }
+    }
+
+    const position = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true, 
+      timeout: 10000 
+    });
+
+    usuarioPos.value = [position.coords.latitude, position.coords.longitude]
+    mapCenter.value = usuarioPos.value
+    
+    if (mapRef.value?.mapObject) {
+      mapRef.value.mapObject.setView(usuarioPos.value, 13);
+    }
+
+    await carregarItensProximos()
+
+  } catch (err) {
+    console.error('Erro ao obter localização nativa:', err);
+    $q.notify({
+      message: 'Não foi possível obter sua localização. Verifique se o GPS está ativado.',
+      color: 'negative',
+      icon: 'error'
+    });
+  }
 }
+
 async function carregarItensProximos() {
   if (!usuarioPos.value) return;
   try {
@@ -265,6 +300,7 @@ async function carregarItensProximos() {
     console.error('Erro ao carregar itens próximos:', err)
   }
 }
+
 async function carregarEventosFixos() {
   try {
     const response = await api.get('/api/events/')
@@ -273,6 +309,7 @@ async function carregarEventosFixos() {
     console.error('Erro ao carregar eventos fixos:', err)
   }
 }
+
 async function carregarMeusEventos() {
   try {
     const response = await api.get('/api/capturas/eventos/')
@@ -281,29 +318,34 @@ async function carregarMeusEventos() {
     console.error('Erro ao carregar meus eventos:', err)
   }
 }
+
 function formatarData(dataISO) {
   if (!dataISO) return '';
-  const dataCorrigida = dataISO + 'T12:00:00Z';
-  return new Date(dataCorrigida).toLocaleDateString('pt-BR', {
+  const data = new Date(dataISO);
+  return data.toLocaleDateString('pt-BR', {
+    timeZone: 'UTC', 
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
 }
+
 function getStatusEvento(dataISO) {
   if (!dataISO) return { text: 'Sem data', color: 'grey' };
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0); 
-  const dataEv = new Date(dataISO + 'T12:00:00Z');
+  const dataEv = new Date(dataISO + 'T00:00:00Z'); 
+  
   if (dataEv < hoje) {
     return { text: 'Já passou', color: 'grey-7' };
   } else {
     return { text: 'Próximo', color: 'positive' };
   }
 }
+
 onMounted(async () => {
   isMounted.value = true
-  obterPosicaoUsuario()
+  obterPosicaoUsuario() 
   await carregarEventosFixos();
   await carregarMeusEventos();
 })
