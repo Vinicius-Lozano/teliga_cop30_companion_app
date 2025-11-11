@@ -15,9 +15,41 @@ from .serializers import (
 )
 
 
-# ===========================
-#  MOCHILAS
-# ===========================
+class MochilaFaunaListView(generics.ListAPIView):
+    """ Retorna apenas os itens do tipo 'Animal' (Fauna) da mochila """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MochilaItemSerializer
+
+    def get_queryset(self):
+        return MochilaItem.objects.filter(
+            user=self.request.user, 
+            item__tipo=Item.Tipo.ANI
+        ).select_related('item')
+
+
+class MochilaFloraListView(generics.ListAPIView):
+    """ Retorna apenas os itens do tipo 'Planta' (Flora) da mochila """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MochilaItemSerializer
+
+    def get_queryset(self):
+        return MochilaItem.objects.filter(
+            user=self.request.user, 
+            item__tipo=Item.Tipo.PLA
+        ).select_related('item')
+
+
+class MochilaItensListView(generics.ListAPIView):
+    """ Retorna apenas itens 'Sem Tipo' (NEN) da mochila """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = MochilaItemSerializer
+
+    def get_queryset(self):
+        return MochilaItem.objects.filter(
+            user=self.request.user,
+            item__tipo=Item.Tipo.NEN
+        ).select_related('item')
+
 
 class MochilaItemListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -30,8 +62,10 @@ class MochilaItemListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         item = serializer.validated_data['item']
-        mochila, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
-        out = self.get_serializer(mochila)
+        
+        captura, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
+        
+        out = self.get_serializer(captura)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -53,10 +87,13 @@ class MochilaEventoListCreateView(generics.ListCreateAPIView):
 
 class MochilaPocaoListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = MochilaPocaoSerializer
+    serializer_class = MochilaPocaoSerializer 
 
     def get_queryset(self):
-        return MochilaPocao.objects.filter(user=self.request.user).select_related('item')
+        return MochilaPocao.objects.filter(
+            user=self.request.user, 
+            item__tipo=Item.Tipo.POC
+        ).select_related('item')
 
     def create(self, request, *args, **kwargs):
         pocao_id = request.data.get('pocao_id') or request.data.get('item_id')
@@ -64,16 +101,14 @@ class MochilaPocaoListCreateView(generics.ListCreateAPIView):
             return Response({"detail": "Campo 'pocao_id' ou 'item_id' é obrigatório."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        item = get_object_or_404(Item, pk=pocao_id)
-        mochila_item, created = MochilaItem.objects.get_or_create(user=request.user, item=item)
-        MochilaPocao.objects.get_or_create(user=request.user, item=item)
-        out = MochilaItemSerializer(mochila_item)
+        item = get_object_or_404(Item, pk=pocao_id, tipo=Item.Tipo.POC)
+
+        mochila_pocao, created = MochilaPocao.objects.get_or_create(user=request.user, item=item)
+
+
+        out = self.get_serializer(mochila_pocao)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
-
-# ===========================
-#  QUESTÕES
-# ===========================
 
 class QuestaoView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -121,9 +156,6 @@ class QuestaoPorItemView(views.APIView):
         return Response(serializer.data)
 
 
-# ===========================
-#  CAPTURA MODULAR
-# ===========================
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CapturaView(APIView):
@@ -146,41 +178,56 @@ class CapturaView(APIView):
         })
 
     def post(self, request, item_id):
-        """Aplica uma habilidade do jogador ao item durante a captura."""
+        """Aplica uma habilidade ou ação (como conversar) ao item."""
+        
         habilidade_id = request.data.get("habilidade_id")
         if not habilidade_id:
             return Response({"error": "Habilidade não informada."},
                             status=status.HTTP_400_BAD_REQUEST)
 
         item = get_object_or_404(Item, id=item_id)
-        habilidade = get_object_or_404(Habilidade, id=habilidade_id)
         progresso, _ = CapturaProgresso.objects.get_or_create(user=request.user, item=item)
 
-        # Valida se o jogador possui essa habilidade e se ainda pode usá-la
-        from habilidades.models import PlayerHabilidade
-        player_hab = PlayerHabilidade.objects.filter(user=request.user, habilidade=habilidade).first()
-        if not player_hab:
-            return Response({"error": "Você não possui essa habilidade."}, status=400)
-        if not player_hab.pode_usar():
-            return Response({"error": "Sem usos restantes dessa habilidade."}, status=400)
+        if habilidade_id == 'conversar':
+            progresso.chance += 20 
+            if progresso.chance > 100:
+                progresso.chance = 100
+            
+            progresso.save()
+            
+            return Response({
+                "success": True,
+                "chance": progresso.chance,
+                "mensagem": "Bônus de conversa aplicado!"
+            }, status=status.HTTP_200_OK)
 
-        # Aplica o efeito da habilidade
-        habilidade.aplicar(progresso)
+        else:
+            try:
+                habilidade = get_object_or_404(Habilidade, id=int(habilidade_id))
+            except (ValueError, Habilidade.DoesNotExist):
+                return Response({"error": f"Habilidade com ID '{habilidade_id}' não encontrada."}, status=404)
+            from habilidades.models import PlayerHabilidade
+            player_hab = PlayerHabilidade.objects.filter(user=request.user, habilidade=habilidade).first()
+            if not player_hab:
+                return Response({"error": f"Você não possui a habilidade '{habilidade.nome}'."}, status=400)
+            if not player_hab.pode_usar():
+                return Response({"error": f"Sem usos restantes da habilidade '{habilidade.nome}'."}, status=400)
 
-        # Registra o uso da habilidade
-        player_hab.registrar_uso()
+            habilidade.aplicar(progresso)
 
-        progresso.save()
-        return Response({
-            "success": True,
-            "chance": progresso.chance,
-            "habilidade": {
-                "id": habilidade.id,
-                "nome": habilidade.nome,
-                "quantidade": player_hab.quantidade,
-            },
-            "mensagem": f"{habilidade.nome} usada com sucesso! Chance atual: {progresso.chance}%"
-        }, status=status.HTTP_200_OK)
+            player_hab.registrar_uso()
+
+            progresso.save()
+            return Response({
+                "success": True,
+                "chance": progresso.chance,
+                "habilidade": {
+                    "id": habilidade.id,
+                    "nome": habilidade.nome,
+                    "quantidade": player_hab.quantidade,
+                },
+                "mensagem": f"{habilidade.nome} usada com sucesso! Chance atual: {progresso.chance}%"
+            }, status=status.HTTP_200_OK)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -201,7 +248,7 @@ class ConfirmarCapturaView(views.APIView):
         mochila_item, created = MochilaItem.objects.get_or_create(
             user=request.user,
             item_id=item_id,
-            defaults={'foi_captura_forcada': False}
+            defaults={'foi_captura_forcada': False} 
         )
 
         progresso.chance = 0

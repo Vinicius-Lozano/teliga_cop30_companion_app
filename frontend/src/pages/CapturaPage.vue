@@ -1,9 +1,7 @@
 <template>
   <q-page class="container q-pa-md position-relative green-bg">
-    <!-- CARD PRINCIPAL -->
     <q-card class="main-card">
       <q-card-section class="row no-wrap">
-        <!-- IMAGEM -->
         <div class="col-7 card-image relative-position">
           <q-img :src="item?.imagem" class="main-img" />
           <transition name="fade">
@@ -14,9 +12,7 @@
           </transition>
         </div>
 
-        <!-- AÇÕES -->
         <q-card-section class="col-5 actions-col column" style="height: 100%; align-items: flex-start;">
-          <!-- Título no topo -->
           <div class="row items-center q-mb-md">
             <q-icon name="backpack" color="green-8" size="28px" class="q-mr-sm" />
             <span class="text-h5" style="color:#166534; font-weight: 700;">Capturar</span>
@@ -24,7 +20,6 @@
 
           <div style="flex-grow:1;"></div>
 
-          <!-- Botões dinâmicos vindos do banco -->
           <div class="column full-width">
             <q-btn
               v-for="habilidade in habilidades"
@@ -42,13 +37,11 @@
               </template>
             </q-btn>
 
-            <!-- Mantém o botão Conversar -->
             <q-btn label="Conversar" color="green" icon="chat" @click="abrirConversa" class="full-width q-mb-sm" />
           </div>
         </q-card-section>
       </q-card-section>
 
-      <!-- BARRA DE PROGRESSO -->
       <q-card-section class="q-mt-md">
         <q-linear-progress
           :value="chance / 100"
@@ -70,7 +63,6 @@
       </q-card-section>
     </q-card>
 
-    <!-- DIALOGO DE PERGUNTA -->
     <q-dialog v-model="mostrarDialogo" persistent>
       <q-card style="min-width: 400px">
         <q-card-section>
@@ -119,19 +111,11 @@ import { useQuasar } from 'quasar'
 const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
-
-// Dados do item e chance
 const item = ref(null)
 const chance = ref(0)
-
-// lista de habilidades (vinda do backend)
 const habilidades = ref([])
-
-// Animações
 const mostrarBonk = ref(false)
 const mostrarOvo = ref(false)
-
-// Diálogo de perguntas
 const mostrarDialogo = ref(false)
 const questao = ref(null)
 const resultado = ref(null)
@@ -140,15 +124,12 @@ const opcoes = ref({})
 onMounted(async () => {
   const itemId = route.params.id
   if (itemId) {
-    // busca item e progresso
     const [resItem, resCaptura] = await Promise.all([
       api.get(`/api/item/${itemId}/`),
       api.get(`/api/captura/${itemId}/`)
     ])
     item.value = resItem.data
     chance.value = resCaptura.data.chance
-
-    // busca habilidades aplicáveis para este usuário e item
     try {
       const resHabs = await api.get(`/api/habilidades/${itemId}/habilidades/`)
       habilidades.value = resHabs.data
@@ -159,7 +140,6 @@ onMounted(async () => {
   }
 })
 
-/** Executa habilidade (chama backend) */
 async function executarAcao(habilidade_id) {
   try {
     const itemId = route.params.id
@@ -177,20 +157,17 @@ async function executarAcao(habilidade_id) {
   }
 }
 
-/** Usa habilidade */
 async function usarHabilidade(h) {
   if (h.quantidade === 0) {
     $q.notify({ type: 'negative', message: 'Sem usos restantes dessa habilidade.' })
     return
   }
 
-  // tocar som se existir
   if (h.som) {
     const a = new Audio(h.som)
     a.play().catch(()=>{})
   }
 
-  // animação customizada (se desejar)
   if (h.animacao) {
     // Exemplo: if (h.nome.toLowerCase().includes('ovo')) { mostrarOvo.value = true; setTimeout(()=>mostrarOvo.value=false,1000) }
   }
@@ -198,20 +175,30 @@ async function usarHabilidade(h) {
   await executarAcao(h.id)
 }
 
-/** Capturar */
 async function capturar() {
+  // $q.loading.show({ message: 'Salvando na mochila...' }) 
+
   try {
     const itemId = route.params.id
     await api.post(`/api/captura/${itemId}/confirmar/`)
     chance.value = 100
-    $q.notify({ type: 'positive', message: 'Item capturado!' })
-    router.push({ name: 'mapa' })
-  } catch {
-    $q.notify({ type: 'negative', message: 'Erro ao executar ação' })
+    $q.notify({
+        type: 'positive',
+        color: 'positive',
+        icon: 'pets',
+        message: `${item.value.nome} foi capturado e adicionado à mochila!`,
+        position: 'top'
+    })
+
+    router.push({ name: 'mapa' }) 
+  
+  } catch(err) {
+    console.error("Erro ao capturar:", err)
+    $q.notify({ type: 'negative', message: 'Erro ao confirmar a captura' })
   }
 }
 
-/** Conversar */
+
 async function abrirConversa() {
   try {
     const itemId = route.params.id
@@ -230,11 +217,13 @@ async function abrirConversa() {
   }
 }
 
-/** Responder pergunta */
 async function responder(letra) {
   try {
     const res = await api.post(`/api/questao/${questao.value.id}/`, { resposta: letra })
     resultado.value = res.data
+    if (res.data.acertou) {
+      await executarAcao('conversar')
+    }
   } catch (err) {
     console.error(err)
     $q.notify({ type: 'negative', message: 'Erro ao enviar resposta' })
@@ -253,7 +242,7 @@ function fecharDialogo() {
   margin: auto;
   border-radius: 16px;
   padding: 16px;
-  background-color: #ffffff;
+  background-color: #ffffff; 
   display: flex;
   flex-direction: column;
 }
